@@ -383,23 +383,29 @@ var Messages = function Messages() {
 
   this.buildArguments = function (requestArgs, args) {
     try {
-      var bufferBuilder = new _h2.BufferBuilder();
-      var requestArgsKey = (0, _keys2.default)(requestArgs)[0];
-      args.filter(function (arg) {
-        return !!arg;
-      }).forEach(function (arg, index) {
-        if (index > 0) {
-          _this.toBinary('&', 'string', bufferBuilder);
-        }
+      var _ret = function () {
+        var bufferBuilder = new _h2.BufferBuilder();
+        var requestArgsKey = (0, _keys2.default)(requestArgs)[0];
+        args.filter(function (arg) {
+          return !!arg;
+        }).forEach(function (arg, index) {
+          if (index > 0) {
+            _this.toBinary('&', 'string', bufferBuilder);
+          }
 
-        var name = arg[0] || requestArgsKey;
-        var type = arg[1];
-        var val = requestArgs[name];
+          var name = arg[0] || requestArgsKey;
+          var type = arg[1];
+          var val = requestArgs[name];
 
-        _this.toBinary(val, type, bufferBuilder);
-      });
+          _this.toBinary(val, type, bufferBuilder);
+        });
 
-      return bufferBuilder.toBuffer();
+        return {
+          v: bufferBuilder.toBuffer()
+        };
+      }();
+
+      if ((typeof _ret === 'undefined' ? 'undefined' : (0, _typeof3.default)(_ret)) === "object") return _ret.v;
     } catch (error) {
       _logger2.default.error('buildArguments error: ' + error);
     }

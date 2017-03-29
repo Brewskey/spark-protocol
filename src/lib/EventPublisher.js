@@ -141,7 +141,14 @@ class EventPublisher extends EventEmitter {
         return;
       }
 
-      eventHandler(event);
+      if (
+        filterOptions.connectionID &&
+        event.connectionID !== filterOptions.connectionID
+      ) {
+        return;
+      }
+
+      process.nextTick((): void => eventHandler(event));
     };
 }
 
