@@ -24,8 +24,7 @@
     "update-firmware": "node ./dist/scripts/update-firmware-binaries"
   },
   "pre-commit": [
-    "lint",
-    "test"
+    "lint"
   ],
   "ava": {
     "verbose": true,
