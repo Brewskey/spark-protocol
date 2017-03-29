@@ -633,7 +633,7 @@ var DeviceServer = function () {
 
     this._onDeviceSubscribe = function () {
       var _ref8 = (0, _asyncToGenerator3.default)(_regenerator2.default.mark(function _callee10(message, device) {
-        var messageName, deviceID, deviceAttributes, ownerID, query, isFromMyDevices;
+        var messageName, deviceID, deviceAttributes, ownerID, query, isFromMyDevices, isSystemEvent;
         return _regenerator2.default.wrap(function _callee10$(_context10) {
           while (1) {
             switch (_context10.prev = _context10.next) {
@@ -680,16 +680,18 @@ var DeviceServer = function () {
                 return _context10.abrupt('return');
 
               case 16:
+                isSystemEvent = messageName.startsWith('spark');
+
 
                 _this._eventPublisher.subscribe(messageName, device.onDeviceEvent, {
-                  connectionID: device.getConnectionKey(),
+                  connectionID: isSystemEvent ? device.getConnectionKey() : null,
                   mydevices: isFromMyDevices,
                   userID: ownerID
                 }, deviceID);
 
                 device.sendReply('SubscribeAck', message.getId());
 
-              case 18:
+              case 19:
               case 'end':
                 return _context10.stop();
             }

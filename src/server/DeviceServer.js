@@ -525,11 +525,13 @@ class DeviceServer {
       return;
     }
 
+    const isSystemEvent = messageName.startsWith('spark');
+
     this._eventPublisher.subscribe(
       messageName,
       device.onDeviceEvent,
       {
-        connectionID: device.getConnectionKey(),
+        connectionID: isSystemEvent ? device.getConnectionKey() : null,
         mydevices: isFromMyDevices,
         userID: ownerID,
       },
