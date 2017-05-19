@@ -10,9 +10,9 @@ var _extends3 = _interopRequireDefault(_extends2);
 
 var _constitute = require('constitute');
 
-var _DeviceAttributeFileRepository = require('./repository/DeviceAttributeFileRepository');
+var _DeviceAttributeDatabaseRepository = require('./repository/DeviceAttributeDatabaseRepository');
 
-var _DeviceAttributeFileRepository2 = _interopRequireDefault(_DeviceAttributeFileRepository);
+var _DeviceAttributeDatabaseRepository2 = _interopRequireDefault(_DeviceAttributeDatabaseRepository);
 
 var _DeviceKeyFileRepository = require('./repository/DeviceKeyFileRepository');
 
@@ -56,7 +56,8 @@ var defaultBindings = function defaultBindings(container, serverSettings) {
   container.bindValue('TCP_DEVICE_SERVER_CONFIG', mergedSettings.TCP_DEVICE_SERVER_CONFIG);
 
   // Repository
-  container.bindClass('DeviceAttributeRepository', _DeviceAttributeFileRepository2.default, ['DEVICE_DIRECTORY']);
+  container.bindClass('DeviceAttributeRepository', _DeviceAttributeDatabaseRepository2.default, ['Database']);
+
   container.bindClass('DeviceKeyRepository', _DeviceKeyFileRepository2.default, ['DEVICE_DIRECTORY']);
   container.bindClass('ServerKeyRepository', _ServerKeyFileRepository2.default, ['SERVER_KEYS_DIRECTORY', 'SERVER_KEY_FILENAME']);
 
