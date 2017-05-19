@@ -1,7 +1,7 @@
 // @flow
 import { Container } from 'constitute';
 
-import DeviceAttributeFileRepository from './repository/DeviceAttributeFileRepository';
+import DeviceAttributeDatabaseRepository from './repository/DeviceAttributeDatabaseRepository';
 import DeviceKeyFileRepository from './repository/DeviceKeyFileRepository';
 import DeviceServer from './server/DeviceServer';
 import EventPublisher from './lib/EventPublisher';
@@ -40,9 +40,10 @@ const defaultBindings = (
   // Repository
   container.bindClass(
     'DeviceAttributeRepository',
-    DeviceAttributeFileRepository,
-    ['DEVICE_DIRECTORY'],
+    DeviceAttributeDatabaseRepository,
+    ['Database'],
   );
+
   container.bindClass(
     'DeviceKeyRepository',
     DeviceKeyFileRepository,

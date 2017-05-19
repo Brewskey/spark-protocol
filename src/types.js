@@ -1,5 +1,9 @@
 // @flow
 
+export type Database = {
+  getCollection(collectionName: string): Object,
+};
+
 export type DeviceAttributes = {
   appHash: ?string,
   claimCode: ?string,
