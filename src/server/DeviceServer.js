@@ -148,16 +148,14 @@ class DeviceServer {
     );
   }
 
-  _updateDeviceSystemFirmware = async (
-    device: Device,
-    ownerID: ?string,
-  ): Promise<void> => {
+  _updateDeviceSystemFirmware = async (device: Device): Promise<void> => {
     const description = await device.getDescription();
     const systemInformation = description.systemInformation;
     if (!systemInformation) {
       return;
     }
-    const deviceID = device.getID();
+
+    const { deviceID, ownerID } = device.getAttributes();
 
     const config = await FirmwareManager.getOtaSystemUpdateConfig(
       systemInformation,
@@ -195,103 +193,103 @@ class DeviceServer {
       );
 
       const deviceID = await device.startProtocolInitialization();
+      try {
+        // todo fix this:  its needed only for flash events
+        // and we dont get ownerID at this point
+        // const ownerID = deviceAttributes && deviceAttributes.ownerID;
 
-      process.nextTick(async (): Promise<void> => {
-        try {
-          const deviceAttributes =
-            await this._deviceAttributeRepository.getByID(device.getID());
-          const ownerID = deviceAttributes && deviceAttributes.ownerID;
+        device.on(
+          DEVICE_EVENT_NAMES.DISCONNECT,
+          (): Promise<void> => this._onDeviceDisconnect(device),
+        );
 
-          device.on(
-            DEVICE_EVENT_NAMES.DISCONNECT,
-            (): Promise<void> => this._onDeviceDisconnect(device),
-          );
+        device.on(
+          DEVICE_MESSAGE_EVENTS_NAMES.SUBSCRIBE,
+          (message: Message): Promise<void> =>
+            this._onDeviceSubscribe(message, device),
+        );
 
-          device.on(
-            DEVICE_MESSAGE_EVENTS_NAMES.SUBSCRIBE,
-            (message: Message): Promise<void> =>
-              this._onDeviceSubscribe(message, device),
-          );
-
-          device.on(
-            DEVICE_MESSAGE_EVENTS_NAMES.PRIVATE_EVENT,
-            (message: Message): Promise<void> =>
-              this._onDeviceSentMessage(
-                message,
-                /* isPublic */false,
-                device,
-              ),
-          );
-
-          device.on(
-            DEVICE_MESSAGE_EVENTS_NAMES.PUBLIC_EVENT,
-            (message: Message): Promise<void> =>
-              this._onDeviceSentMessage(
-                message,
-                /* isPublic */true,
-                device,
-              ),
-          );
-
-          device.on(
-            DEVICE_MESSAGE_EVENTS_NAMES.GET_TIME,
-            (message: Message): void =>
-              this._onDeviceGetTime(message, device),
-          );
-
-          device.on(
-            DEVICE_EVENT_NAMES.FLASH_STARTED,
-            (): void => this.publishSpecialEvent(
-              SYSTEM_EVENT_NAMES.FLASH_STATUS,
-              'started',
-              deviceID,
-              ownerID,
+        device.on(
+          DEVICE_MESSAGE_EVENTS_NAMES.PRIVATE_EVENT,
+          (message: Message): Promise<void> =>
+            this._onDeviceSentMessage(
+              message,
+              /* isPublic */false,
+              device,
             ),
-          );
+        );
 
-          device.on(
-            DEVICE_EVENT_NAMES.FLASH_SUCCESS,
-            (): void => this.publishSpecialEvent(
-              SYSTEM_EVENT_NAMES.FLASH_STATUS,
-              'success',
-              deviceID,
-              ownerID,
+        device.on(
+          DEVICE_MESSAGE_EVENTS_NAMES.PUBLIC_EVENT,
+          (message: Message): Promise<void> =>
+            this._onDeviceSentMessage(
+              message,
+              /* isPublic */true,
+              device,
             ),
-          );
+        );
 
-          device.on(
-            DEVICE_EVENT_NAMES.FLASH_FAILED,
-            (): void => this.publishSpecialEvent(
-              SYSTEM_EVENT_NAMES.FLASH_STATUS,
-              'failed',
-              deviceID,
-              ownerID,
-            ),
-          );
+        device.on(
+          DEVICE_MESSAGE_EVENTS_NAMES.GET_TIME,
+          (message: Message): void =>
+            this._onDeviceGetTime(message, device),
+        );
 
-          if (this._devicesById.has(deviceID)) {
-            const existingConnection = this._devicesById.get(deviceID);
-            nullthrows(existingConnection).disconnect(
-              'Device was already connected. Reconnecting.\r\n',
-            );
-          }
+        // device.on(
+        //   DEVICE_EVENT_NAMES.FLASH_STARTED,
+        //   (): void => this.publishSpecialEvent(
+        //     SYSTEM_EVENT_NAMES.FLASH_STATUS,
+        //     'started',
+        //     deviceID,
+        //     ownerID,
+        //   ),
+        // );
+        //
+        // device.on(
+        //   DEVICE_EVENT_NAMES.FLASH_SUCCESS,
+        //   (): void => this.publishSpecialEvent(
+        //     SYSTEM_EVENT_NAMES.FLASH_STATUS,
+        //     'success',
+        //     deviceID,
+        //     ownerID,
+        //   ),
+        // );
+        //
+        // device.on(
+        //   DEVICE_EVENT_NAMES.FLASH_FAILED,
+        //   (): void => this.publishSpecialEvent(
+        //     SYSTEM_EVENT_NAMES.FLASH_STATUS,
+        //     'failed',
+        //     deviceID,
+        //     ownerID,
+        //   ),
+        // );
 
-          this._devicesById.set(deviceID, device);
-
-          device.completeProtocolInitialization();
-          this._onDeviceReady(device);
-
-          logger.info(
-            `Connection from: ${device.getRemoteIPAddress()} - ` +
-              `Device ID: ${deviceID}`,
-              `Connection ID: ${counter}`,
-          );
-        } catch (error) {
-          device.disconnect(
-            `Error during connection: ${error}`,
+        if (this._devicesById.has(deviceID)) {
+          const existingConnection = this._devicesById.get(deviceID);
+          nullthrows(existingConnection).disconnect(
+            'Device was already connected. Reconnecting.\r\n',
           );
         }
-      });
+
+        this._devicesById.set(deviceID, device);
+
+        device.completeProtocolInitialization();
+
+        // process.nextTick(() => this._onDeviceReady(device));
+        setImmediate((): void => this._onDeviceReady(device));
+
+
+        logger.info(
+          `Connection from: ${device.getRemoteIPAddress()} - ` +
+            `Device ID: ${deviceID}`,
+            `Connection ID: ${counter}`,
+        );
+      } catch (error) {
+        device.disconnect(
+          `Error during connection: ${error}`,
+        );
+      }
     } catch (error) {
       logger.error(`Device startup failed: ${error.message}`);
     }
@@ -300,7 +298,9 @@ class DeviceServer {
   _onDeviceDisconnect = async (
     device: Device,
   ): Promise<void> => {
-    const deviceID = device.getID();
+    const deviceAttributes = device.getAttributes();
+    const { deviceID, ownerID } = deviceAttributes;
+    console.log('disconnect');
 
     const newDevice = this._devicesById.get(deviceID);
     const connectionKey = device.getConnectionKey();
@@ -311,15 +311,7 @@ class DeviceServer {
     this._devicesById.delete(deviceID);
     this._eventPublisher.unsubscribeBySubscriberID(deviceID);
 
-    const deviceAttributes =
-      await this._deviceAttributeRepository.getByID(deviceID);
-
-    await this._deviceAttributeRepository.update({
-      ...deviceAttributes,
-      lastHeard: device.ping().lastPing,
-    });
-
-    const ownerID = deviceAttributes && deviceAttributes.ownerID;
+    await this._deviceAttributeRepository.update(deviceAttributes);
 
     this.publishSpecialEvent(
       SYSTEM_EVENT_NAMES.SPARK_STATUS,
@@ -352,6 +344,8 @@ class DeviceServer {
 
       const existingAttributes =
         await this._deviceAttributeRepository.getByID(deviceID);
+      device.updateAttributes(existingAttributes);
+
       const ownerID = existingAttributes && existingAttributes.ownerID;
 
       this.publishSpecialEvent(
@@ -401,10 +395,7 @@ class DeviceServer {
     device: Device,
   ): Promise<void> => {
     try {
-      const deviceID = device.getID();
-      const deviceAttributes =
-        await this._deviceAttributeRepository.getByID(deviceID);
-      const ownerID = deviceAttributes && deviceAttributes.ownerID;
+      const { deviceID, name, ownerID } = device.getAttributes();
 
       const eventData = {
         connectionID: device.getConnectionKey(),
@@ -455,10 +446,10 @@ class DeviceServer {
         );
       }
 
-      if (eventName.startsWith(SYSTEM_EVENT_NAMES.GET_NAME) && deviceAttributes) {
+      if (eventName.startsWith(SYSTEM_EVENT_NAMES.GET_NAME)) {
         this.publishSpecialEvent(
           SYSTEM_EVENT_NAMES.GET_NAME,
-          deviceAttributes.name,
+          name,
           deviceID,
           ownerID,
         );
@@ -511,10 +502,7 @@ class DeviceServer {
         );
 
         if (this._areSystemFirmwareAutoupdatesEnabled) {
-          await this._updateDeviceSystemFirmware(
-            device,
-            ownerID,
-          );
+          await this._updateDeviceSystemFirmware(device);
         }
       }
 
@@ -534,12 +522,9 @@ class DeviceServer {
     device: Device,
   ): Promise<void> => {
     const claimCode = message.getPayload().toString();
-    const deviceID = device.getID();
-    const deviceAttributes =
-      await this._deviceAttributeRepository.getByID(deviceID);
+    const deviceAttributes = device.getAttributes();
 
     if (
-      !deviceAttributes ||
       deviceAttributes.ownerID ||
       deviceAttributes.claimCode === claimCode
     ) {
@@ -552,11 +537,14 @@ class DeviceServer {
       return;
     }
 
-    await this._deviceAttributeRepository.update({
+    const newAttributes = {
       ...deviceAttributes,
       claimCode,
       ownerID: claimRequestUserID,
-    });
+    };
+
+    device.updateAttributes(newAttributes);
+    await this._deviceAttributeRepository.update(newAttributes);
 
     this._claimCodeManager.removeClaimCode(claimCode);
   };
@@ -571,10 +559,10 @@ class DeviceServer {
     // uri -> /e/event_name?u    --> all my devices
     // uri -> /e/event_name?u (deviceid)    --> deviceid?
     const messageName = message.getUriPath().substr(3);
-    const deviceID = device.getID();
-    const deviceAttributes =
-      await this._deviceAttributeRepository.getByID(deviceID);
-    let ownerID = deviceAttributes && deviceAttributes.ownerID;
+    const deviceAttributes = device.getAttributes();
+    const deviceID = deviceAttributes.deviceID;
+    let ownerID = deviceAttributes.ownerID;
+
     const query = message.getUriQuery();
     const isFromMyDevices = query && !!query.match('u');
 

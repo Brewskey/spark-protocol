@@ -9,6 +9,10 @@ var _promise = require('babel-runtime/core-js/promise');
 
 var _promise2 = _interopRequireDefault(_promise);
 
+var _setImmediate2 = require('babel-runtime/core-js/set-immediate');
+
+var _setImmediate3 = _interopRequireDefault(_setImmediate2);
+
 var _regenerator = require('babel-runtime/regenerator');
 
 var _regenerator2 = _interopRequireDefault(_regenerator);
@@ -16,6 +20,10 @@ var _regenerator2 = _interopRequireDefault(_regenerator);
 var _asyncToGenerator2 = require('babel-runtime/helpers/asyncToGenerator');
 
 var _asyncToGenerator3 = _interopRequireDefault(_asyncToGenerator2);
+
+var _extends2 = require('babel-runtime/helpers/extends');
+
+var _extends3 = _interopRequireDefault(_extends2);
 
 var _getPrototypeOf = require('babel-runtime/core-js/object/get-prototype-of');
 
@@ -183,6 +191,7 @@ var Device = function (_EventEmitter) {
 
     var _this = (0, _possibleConstructorReturn3.default)(this, (Device.__proto__ || (0, _getPrototypeOf2.default)(Device)).call(this));
 
+    _this._attributes = {};
     _this._cipherStream = null;
     _this._connectionKey = null;
     _this._connectionStartTime = null;
@@ -190,7 +199,6 @@ var Device = function (_EventEmitter) {
     _this._deviceFunctionState = null;
     _this._disconnectCounter = 0;
     _this._id = '';
-    _this._lastDevicePing = new Date();
     _this._maxBinarySize = null;
     _this._otaChunkSize = null;
     _this._particleProductId = 0;
@@ -203,6 +211,16 @@ var Device = function (_EventEmitter) {
     _this._socketTimeoutInterval = null;
     _this._tokens = {};
 
+    _this.updateAttributes = function (attributes) {
+      _this._attributes = (0, _extends3.default)({}, _this._attributes, attributes);
+
+      return _this._attributes;
+    };
+
+    _this.getAttributes = function () {
+      return (0, _nullthrows2.default)(_this._attributes);
+    };
+
     _this.setMaxBinarySize = function (maxBinarySize) {
       _this._maxBinarySize = maxBinarySize;
     };
@@ -212,7 +230,6 @@ var Device = function (_EventEmitter) {
     };
 
     _this.startProtocolInitialization = (0, _asyncToGenerator3.default)(_regenerator2.default.mark(function _callee() {
-      var oldEmit;
       return _regenerator2.default.wrap(function _callee$(_context) {
         while (1) {
           switch (_context.prev = _context.next) {
@@ -231,26 +248,19 @@ var Device = function (_EventEmitter) {
                 return _this.disconnect('socket timeout');
               });
 
-              oldEmit = _this.emit;
+              // const oldEmit = this.emit;
+              //
+              // this.emit = (event: string, ...args: Array<any>) => {
+              //   process.nextTick((): boolean => oldEmit.call(this, event, ...args));
+              // };
 
-
-              _this.emit = function (event) {
-                for (var _len = arguments.length, args = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
-                  args[_key - 1] = arguments[_key];
-                }
-
-                process.nextTick(function () {
-                  return oldEmit.call.apply(oldEmit, [_this, event].concat(args));
-                });
-              };
-
-              _context.next = 10;
+              _context.next = 8;
               return _this.startHandshake();
 
-            case 10:
+            case 8:
               return _context.abrupt('return', _context.sent);
 
-            case 11:
+            case 9:
             case 'end':
               return _context.stop();
           }
@@ -275,7 +285,7 @@ var Device = function (_EventEmitter) {
               deviceID = _ref3.deviceID;
               handshakeBuffer = _ref3.handshakeBuffer;
 
-
+              _this.updateAttributes({ deviceID: deviceID });
               _this._id = deviceID;
               _this._cipherStream = cipherStream;
               _this._decipherStream = decipherStream;
@@ -284,19 +294,19 @@ var Device = function (_EventEmitter) {
 
               return _context2.abrupt('return', deviceID);
 
-            case 15:
-              _context2.prev = 15;
+            case 16:
+              _context2.prev = 16;
               _context2.t0 = _context2['catch'](0);
 
               _this.disconnect(_context2.t0);
               throw _context2.t0;
 
-            case 19:
+            case 20:
             case 'end':
               return _context2.stop();
           }
         }
-      }, _callee2, _this2, [[0, 15]]);
+      }, _callee2, _this2, [[0, 16]]);
     }));
 
     _this.completeProtocolInitialization = function () {
@@ -382,7 +392,7 @@ var Device = function (_EventEmitter) {
 
       return {
         connected: _this._socket !== null,
-        lastPing: _this._lastDevicePing
+        lastPing: _this._attributes.lastHeard
       };
     };
 
@@ -417,7 +427,7 @@ var Device = function (_EventEmitter) {
 
       _this._incrementReceiveCounter();
       if (message.isEmpty() && message.isConfirmable()) {
-        _this._lastDevicePing = new Date();
+        _this.updateAttributes({ lastHeard: new Date() });
         _this.sendReply('PingAck', message.getId());
         return;
       }
@@ -494,7 +504,7 @@ var Device = function (_EventEmitter) {
         throw new Error('Client - sendMessage before READY', { deviceID: _this._id, messageName: messageName });
       }
 
-      process.nextTick(function () {
+      (0, _setImmediate3.default)(function () {
         return !!_this._cipherStream && _this._cipherStream.write(message);
       });
 
@@ -1217,7 +1227,6 @@ var Device = function (_EventEmitter) {
       } catch (error) {
         _logger2.default.error('Disconnect TCPSocket error: ' + error);
       }
-
       _this.emit(DEVICE_EVENT_NAMES.DISCONNECT, message);
 
       // obv, don't do this before emitting disconnect.

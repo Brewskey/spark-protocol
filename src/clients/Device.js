@@ -20,7 +20,7 @@
 
 import type { Socket } from 'net';
 import type { Duplex } from 'stream';
-import type { Event } from '../types';
+import type { DeviceAttributes, Event } from '../types';
 import type Handshake from '../lib/Handshake';
 import type { MessageType } from '../lib/MessageSpecifications';
 import type { FileTransferStoreType } from '../lib/FileTransferStore';
@@ -126,6 +126,7 @@ export const DEVICE_MESSAGE_EVENTS_NAMES = {
  * @Device
  */
 class Device extends EventEmitter {
+  _attributes: DeviceAttributes = {};
   _cipherStream: ?Duplex = null;
   _connectionKey: ?string = null;
   _connectionStartTime: ?Date = null;
@@ -133,7 +134,6 @@ class Device extends EventEmitter {
   _deviceFunctionState: ?Object = null;
   _disconnectCounter: number = 0;
   _id: string = '';
-  _lastDevicePing: Date = new Date();
   _maxBinarySize: ?number = null;
   _otaChunkSize: ?number = null;
   _owningFlasher: ?Flasher;
@@ -161,6 +161,17 @@ class Device extends EventEmitter {
     this._socket = socket;
     this._handshake = handshake;
   }
+
+  updateAttributes = (attributes: $Shape<DeviceAttributes>): DeviceAttributes => {
+    this._attributes = {
+      ...this._attributes,
+      ...attributes,
+    };
+
+    return this._attributes;
+  };
+
+  getAttributes = (): DeviceAttributes => nullthrows(this._attributes);
 
   setMaxBinarySize = (maxBinarySize: number) => {
     this._maxBinarySize = maxBinarySize;
@@ -191,11 +202,11 @@ class Device extends EventEmitter {
       (): void => this.disconnect('socket timeout'),
     );
 
-    const oldEmit = this.emit;
-
-    this.emit = (event: string, ...args: Array<any>) => {
-      process.nextTick((): booelan => oldEmit.call(this, event, ...args));
-    };
+    // const oldEmit = this.emit;
+    //
+    // this.emit = (event: string, ...args: Array<any>) => {
+    //   process.nextTick((): boolean => oldEmit.call(this, event, ...args));
+    // };
 
     return await this.startHandshake();
   };
@@ -210,7 +221,7 @@ class Device extends EventEmitter {
         deviceID,
         handshakeBuffer,
       } = await this._handshake.start(this);
-
+      this.updateAttributes({ deviceID });
       this._id = deviceID;
       this._cipherStream = cipherStream;
       this._decipherStream = decipherStream;
@@ -320,7 +331,7 @@ class Device extends EventEmitter {
 
     return {
       connected: this._socket !== null,
-      lastPing: this._lastDevicePing,
+      lastPing: this._attributes.lastHeard,
     };
   };
 
@@ -365,7 +376,7 @@ class Device extends EventEmitter {
 
     this._incrementReceiveCounter();
     if (message.isEmpty() && message.isConfirmable()) {
-      this._lastDevicePing = new Date();
+      this.updateAttributes({ lastHeard: new Date() });
       this.sendReply('PingAck', message.getId());
       return;
     }
@@ -474,7 +485,7 @@ class Device extends EventEmitter {
       );
     }
 
-    process.nextTick(
+    setImmediate(
       (): bool => !!this._cipherStream && this._cipherStream.write(message),
     );
 
@@ -1120,7 +1131,6 @@ class Device extends EventEmitter {
     } catch (error) {
       logger.error(`Disconnect TCPSocket error: ${error}`);
     }
-
     this.emit(DEVICE_EVENT_NAMES.DISCONNECT, message);
 
     // obv, don't do this before emitting disconnect.
