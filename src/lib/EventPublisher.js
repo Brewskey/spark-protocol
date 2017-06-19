@@ -28,7 +28,7 @@ import settings from '../settings';
 export const getRequestEventName = (eventName: string): string =>
  `${eventName}/request`;
 
-const ALL_EVENTS = '*all*';
+export const ALL_EVENTS = '*all*';
 const LISTEN_FOR_RESPONSE_TIMEOUT = 15000;
 
 type FilterOptions = {
