@@ -33,8 +33,10 @@ import defaultBindings from './defaultBindings';
 import memoizeGet from './decorators/memoizeGet';
 import memoizeSet from './decorators/memoizeSet';
 import SPARK_SERVER_EVENTS from './lib/SparkServerEvents';
+import { ALL_EVENTS } from './lib/EventPublisher';
 
 export {
+  ALL_EVENTS,
   ClaimCodeManager,
   defaultBindings,
   Device,

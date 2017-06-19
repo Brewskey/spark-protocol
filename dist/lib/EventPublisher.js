@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.getRequestEventName = undefined;
+exports.ALL_EVENTS = exports.getRequestEventName = undefined;
 
 var _regenerator = require('babel-runtime/regenerator');
 
@@ -81,7 +81,7 @@ var getRequestEventName = exports.getRequestEventName = function getRequestEvent
    *
    */
 
-var ALL_EVENTS = '*all*';
+var ALL_EVENTS = exports.ALL_EVENTS = '*all*';
 var LISTEN_FOR_RESPONSE_TIMEOUT = 15000;
 
 var EventPublisher = function (_EventEmitter) {
