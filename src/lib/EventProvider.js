@@ -10,9 +10,9 @@ class EventProvider {
     this._eventPublisher = eventPublisher;
   }
 
-  onNewEvent = (callback: (event: Event) => void) => {
+  onNewEvent = (callback: (event: Event) => void, eventNamePrefix: string = '*') => {
     this._eventPublisher.subscribe(
-      '*',
+      eventNamePrefix,
       this._onNewEvent(callback),
       {
         filterOptions: {

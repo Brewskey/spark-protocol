@@ -42,6 +42,7 @@ type FilterOptions = {
 type SubscriptionOptions = {
   filterOptions?: FilterOptions,
   once?: boolean,
+  onceUnsubscribe?: boolean,
   subscriberID?: string,
   subscriptionTimeout?: number,
   timeoutHandler?: () => void,
@@ -96,6 +97,8 @@ class EventPublisher extends EventEmitter {
           responseListener,
           {
             once: true,
+            onceUnsubscribe: true,  // Unsubscribe will be called by Eventpublisher
+                                    // in case of error on success in addition to once
             subscriptionTimeout: LISTEN_FOR_RESPONSE_TIMEOUT,
             timeoutHandler: (): void => reject(
               new Error(`Response timeout for event: ${eventData.name}`),
@@ -125,6 +128,7 @@ class EventPublisher extends EventEmitter {
     const {
       filterOptions,
       once,
+      onceUnsubscribe,
       subscriptionTimeout,
       timeoutHandler,
     } = options;
@@ -148,6 +152,8 @@ class EventPublisher extends EventEmitter {
       },
     );
 
+    let cleared = false;  // Specifiy if unsubscribe was called for this Subscription
+
     if (subscriptionTimeout) {
       const timeout = setTimeout(
         () => {
@@ -158,11 +164,20 @@ class EventPublisher extends EventEmitter {
         },
         subscriptionTimeout,
       );
-
-      this.once(eventNamePrefix, (): void => clearTimeout(timeout));
+      this.once(eventNamePrefix, () => {
+        cleared = true;
+        clearTimeout(timeout);
+      });
     }
 
     if (once) {
+      if (onceUnsubscribe === true) {
+        this.once(eventNamePrefix, () => {
+          if (!cleared) {
+            this.unsubscribe(subscriptionID);
+          }
+        });
+      }
       this.once(eventNamePrefix, listener);
     } else {
       this.on(eventNamePrefix, listener);

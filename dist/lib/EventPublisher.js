@@ -131,6 +131,8 @@ var EventPublisher = function (_EventEmitter) {
 
                   _this.subscribe(responseEventName, responseListener, {
                     once: true,
+                    onceUnsubscribe: true, // Unsubscribe will be called by Eventpublisher
+                    // in case of error on success in addition to once
                     subscriptionTimeout: LISTEN_FOR_RESPONSE_TIMEOUT,
                     timeoutHandler: function timeoutHandler() {
                       return reject(new Error('Response timeout for event: ' + eventData.name));
@@ -164,6 +166,7 @@ var EventPublisher = function (_EventEmitter) {
       var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
       var filterOptions = options.filterOptions,
           once = options.once,
+          onceUnsubscribe = options.onceUnsubscribe,
           subscriptionTimeout = options.subscriptionTimeout,
           timeoutHandler = options.timeoutHandler;
 
@@ -182,6 +185,8 @@ var EventPublisher = function (_EventEmitter) {
         options: options
       });
 
+      var cleared = false; // Specifiy if unsubscribe was called for this Subscription 
+
       if (subscriptionTimeout) {
         var timeout = setTimeout(function () {
           _this.unsubscribe(subscriptionID);
@@ -189,13 +194,20 @@ var EventPublisher = function (_EventEmitter) {
             timeoutHandler();
           }
         }, subscriptionTimeout);
-
         _this.once(eventNamePrefix, function () {
-          return clearTimeout(timeout);
+          cleared = true;
+          clearTimeout(timeout);
         });
       }
 
       if (once) {
+        if (onceUnsubscribe === true) {
+          _this.once(eventNamePrefix, function () {
+            if (!cleared) {
+              _this.unsubscribe(subscriptionID);
+            }
+          });
+        }
         _this.once(eventNamePrefix, listener);
       } else {
         _this.on(eventNamePrefix, listener);
