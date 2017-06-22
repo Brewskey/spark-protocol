@@ -18,13 +18,11 @@ class EventProvider {
     });
   };
 
-  _onNewEvent = (
-    callback: (event: Event) => void,
-  ): ((event: Event) => void) => (event: Event) => {
-    const eventToBroadcast: Event = ({
-      ...event,
-      broadcasted: true,
-    }: any);
+  _onNewEvent = (callback: (event: Event) => void): (event: Event) => void =>
+    (event: Event) => {
+      const eventToBroadcast: Event = ({
+        ...event,
+      }: any);
 
     callback(eventToBroadcast);
   };
