@@ -645,12 +645,14 @@ class DeviceServer {
 
       this._eventPublisher.publish({
         context: await device.callFunction(functionName, functionArguments),
+        isIPC: true,
         isPublic: false,
         name: responseEventName,
       });
     } catch (error) {
       this._eventPublisher.publish({
         context: { error },
+        isIPC: true,
         isPublic: false,
         name: responseEventName,
       });
@@ -671,12 +673,14 @@ class DeviceServer {
 
       this._eventPublisher.publish({
         context: await device.flash(fileBuffer),
+        isIPC: true,
         isPublic: false,
         name: responseEventName,
       });
     } catch (error) {
       this._eventPublisher.publish({
         context: { error },
+        isIPC: true,
         isPublic: false,
         name: responseEventName,
       });
@@ -698,12 +702,14 @@ class DeviceServer {
 
       this._eventPublisher.publish({
         context: device.getAttributes(),
+        isIPC: true,
         isPublic: false,
         name: responseEventName,
       });
     } catch (error) {
       this._eventPublisher.publish({
         context: { error },
+        isIPC: true,
         isPublic: false,
         name: responseEventName,
       });
@@ -725,12 +731,14 @@ class DeviceServer {
 
       this._eventPublisher.publish({
         context: { result: await device.getVariableValue(variableName) },
+        isIPC: true,
         isPublic: false,
         name: responseEventName,
       });
     } catch (error) {
       this._eventPublisher.publish({
         context: { error },
+        isIPC: true,
         isPublic: false,
         name: responseEventName,
       });
@@ -750,6 +758,7 @@ class DeviceServer {
 
     this._eventPublisher.publish({
       context: pingObject,
+      isIPC: true,
       isPublic: false,
       name: responseEventName,
     });
@@ -772,12 +781,14 @@ class DeviceServer {
 
       this._eventPublisher.publish({
         context: await device.raiseYourHand(shouldShowSignal),
+        isIPC: true,
         isPublic: false,
         name: responseEventName,
       });
     } catch (error) {
       this._eventPublisher.publish({
         context: { error },
+        isIPC: true,
         isPublic: false,
         name: responseEventName,
       });
@@ -802,12 +813,14 @@ class DeviceServer {
 
       this._eventPublisher.publish({
         context: await device.getAttributes(),
+        isIPC: true,
         isPublic: false,
         name: responseEventName,
       });
     } catch (error) {
       this._eventPublisher.publish({
         context: { error },
+        isIPC: true,
         isPublic: false,
         name: responseEventName,
       });
@@ -837,6 +850,28 @@ class DeviceServer {
       this._eventPublisher.publish(eventData);
     });
   }
+  publishIPCEvent = (
+    eventName: string,
+    data: string,
+    deviceID: string,
+    userID: ?string,
+  ) => {
+    if (!userID) {
+      return;
+    }
+    const eventData = {
+      data,
+      deviceID,
+      isIPC: true,
+      isPublic: false,
+      name: eventName,
+      userID,
+    };
+    process.nextTick(() => {
+      this._eventPublisher.publish(eventData);
+    });
+  }
+
 }
 
 export default DeviceServer;
