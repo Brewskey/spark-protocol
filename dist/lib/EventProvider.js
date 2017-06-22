@@ -26,7 +26,8 @@ var EventProvider = function EventProvider(eventPublisher) {
   this.onNewEvent = function (callback) {
     _this._eventPublisher.subscribe('*', _this._onNewEvent(callback), {
       filterOptions: {
-        listenToBroadcastedEvents: false
+        listenToBroadcastedEvents: false,
+        listenToIPC: false
       }
     });
   };

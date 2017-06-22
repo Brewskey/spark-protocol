@@ -141,6 +141,7 @@ var EventPublisher = function (_EventEmitter) {
                     context: (0, _extends3.default)({}, eventData.context, {
                       responseEventName: responseEventName
                     }),
+                    isIPC: true,
                     isPublic: false,
                     name: requestEventName
                   }));
@@ -222,6 +223,9 @@ var EventPublisher = function (_EventEmitter) {
       });
     }, _this._filterEvents = function (eventHandler, filterOptions) {
       return function (event) {
+        if (event.isIPC && filterOptions.listenToIPC === false) {
+          return;
+        }
         // filter private events from another devices
         if (filterOptions.userID && !event.isPublic && filterOptions.userID !== event.userID) {
           return;
