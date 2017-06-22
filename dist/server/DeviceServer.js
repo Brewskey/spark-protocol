@@ -750,6 +750,7 @@ var DeviceServer = function () {
                 _context12.t2 = responseEventName;
                 _context12.t3 = {
                   context: _context12.t1,
+                  isIPC: true,
                   isPublic: false,
                   name: _context12.t2
                 };
@@ -765,6 +766,7 @@ var DeviceServer = function () {
 
                 _this._eventPublisher.publish({
                   context: { error: _context12.t4 },
+                  isIPC: true,
                   isPublic: false,
                   name: responseEventName
                 });
@@ -811,6 +813,7 @@ var DeviceServer = function () {
                 _context13.t2 = responseEventName;
                 _context13.t3 = {
                   context: _context13.t1,
+                  isIPC: true,
                   isPublic: false,
                   name: _context13.t2
                 };
@@ -826,6 +829,7 @@ var DeviceServer = function () {
 
                 _this._eventPublisher.publish({
                   context: { error: _context13.t4 },
+                  isIPC: true,
                   isPublic: false,
                   name: responseEventName
                 });
@@ -870,6 +874,7 @@ var DeviceServer = function () {
 
                 _this._eventPublisher.publish({
                   context: device.getAttributes(),
+                  isIPC: true,
                   isPublic: false,
                   name: responseEventName
                 });
@@ -882,6 +887,7 @@ var DeviceServer = function () {
 
                 _this._eventPublisher.publish({
                   context: { error: _context14.t0 },
+                  isIPC: true,
                   isPublic: false,
                   name: responseEventName
                 });
@@ -931,6 +937,7 @@ var DeviceServer = function () {
                 _context15.t3 = responseEventName;
                 _context15.t4 = {
                   context: _context15.t2,
+                  isIPC: true,
                   isPublic: false,
                   name: _context15.t3
                 };
@@ -946,6 +953,7 @@ var DeviceServer = function () {
 
                 _this._eventPublisher.publish({
                   context: { error: _context15.t5 },
+                  isIPC: true,
                   isPublic: false,
                   name: responseEventName
                 });
@@ -981,6 +989,7 @@ var DeviceServer = function () {
 
                 _this._eventPublisher.publish({
                   context: pingObject,
+                  isIPC: true,
                   isPublic: false,
                   name: responseEventName
                 });
@@ -1031,6 +1040,7 @@ var DeviceServer = function () {
                 _context17.t2 = responseEventName;
                 _context17.t3 = {
                   context: _context17.t1,
+                  isIPC: true,
                   isPublic: false,
                   name: _context17.t2
                 };
@@ -1046,6 +1056,7 @@ var DeviceServer = function () {
 
                 _this._eventPublisher.publish({
                   context: { error: _context17.t4 },
+                  isIPC: true,
                   isPublic: false,
                   name: responseEventName
                 });
@@ -1098,6 +1109,7 @@ var DeviceServer = function () {
                 _context18.t2 = responseEventName;
                 _context18.t3 = {
                   context: _context18.t1,
+                  isIPC: true,
                   isPublic: false,
                   name: _context18.t2
                 };
@@ -1113,6 +1125,7 @@ var DeviceServer = function () {
 
                 _this._eventPublisher.publish({
                   context: { error: _context18.t4 },
+                  isIPC: true,
                   isPublic: false,
                   name: responseEventName
                 });
@@ -1141,6 +1154,23 @@ var DeviceServer = function () {
       var eventData = {
         data: data,
         deviceID: deviceID,
+        isPublic: false,
+        name: eventName,
+        userID: userID
+      };
+      process.nextTick(function () {
+        _this._eventPublisher.publish(eventData);
+      });
+    };
+
+    this.publishIPCEvent = function (eventName, data, deviceID, userID) {
+      if (!userID) {
+        return;
+      }
+      var eventData = {
+        data: data,
+        deviceID: deviceID,
+        isIPC: true,
         isPublic: false,
         name: eventName,
         userID: userID
