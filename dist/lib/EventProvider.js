@@ -33,9 +33,7 @@ var EventProvider = function EventProvider(eventPublisher) {
 
   this._onNewEvent = function (callback) {
     return function (event) {
-      var eventToBroadcast = (0, _extends3.default)({}, event, {
-        broadcasted: true
-      });
+      var eventToBroadcast = (0, _extends3.default)({}, event);
 
       callback(eventToBroadcast);
     };
