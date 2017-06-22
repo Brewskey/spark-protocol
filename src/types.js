@@ -38,6 +38,7 @@ export type EventData = {
   data?: string,
   deviceID?: ?string,
   isPublic: boolean,
+  isIPC?: boolean,
   name: string,
   ttl?: number,
   userID?: string,
