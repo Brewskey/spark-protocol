@@ -24,7 +24,9 @@ var EventProvider = function EventProvider(eventPublisher) {
   (0, _classCallCheck3.default)(this, EventProvider);
 
   this.onNewEvent = function (callback) {
-    _this._eventPublisher.subscribe('*', _this._onNewEvent(callback), {
+    var eventNamePrefix = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : '*';
+
+    _this._eventPublisher.subscribe(eventNamePrefix, _this._onNewEvent(callback), {
       filterOptions: {
         listenToBroadcastedEvents: false,
         listenToIPC: false

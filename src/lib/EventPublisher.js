@@ -42,6 +42,7 @@ type FilterOptions = {
 type SubscriptionOptions = {
   filterOptions?: FilterOptions,
   once?: boolean,
+  onceUnsubscribe?: boolean,
   subscriberID?: string,
   subscriptionTimeout?: number,
   timeoutHandler?: () => void,
@@ -86,12 +87,28 @@ class EventPublisher extends EventEmitter {
         const responseListener = (event: Event): void =>
           resolve(nullthrows(event.context));
 
+<<<<<<< 347a8d1a179d44b4c635b249e8008e44b60b52b2
         this.subscribe(responseEventName, responseListener, {
           once: true,
           subscriptionTimeout: LISTEN_FOR_RESPONSE_TIMEOUT,
           timeoutHandler: (): void =>
             reject(new Error(`Response timeout for event: ${eventData.name}`)),
         });
+=======
+        this.subscribe(
+          responseEventName,
+          responseListener,
+          {
+            once: true,
+            onceUnsubscribe: true,  // Unsubscribe will be called by Eventpublisher
+                                    // in case of error on success in addition to once
+            subscriptionTimeout: LISTEN_FOR_RESPONSE_TIMEOUT,
+            timeoutHandler: (): void => reject(
+              new Error(`Response timeout for event: ${eventData.name}`),
+            ),
+          },
+        );
+>>>>>>> added SubscriptionOption onceUnsubscribe so a publishAndListenForResponse call will call unsubscribe in case of success
 
         this.publish({
           ...eventData,
@@ -115,6 +132,7 @@ class EventPublisher extends EventEmitter {
     const {
       filterOptions,
       once,
+      onceUnsubscribe,
       subscriptionTimeout,
       timeoutHandler,
     } = options;
@@ -135,18 +153,32 @@ class EventPublisher extends EventEmitter {
       options,
     });
 
-    if (subscriptionTimeout) {
-      const timeout = setTimeout(() => {
-        this.unsubscribe(subscriptionID);
-        if (timeoutHandler) {
-          timeoutHandler();
-        }
-      }, subscriptionTimeout);
+    let cleared = false;  // Specifiy if unsubscribe was called for this Subscription
 
-      this.once(eventNamePrefix, (): void => clearTimeout(timeout));
+    if (subscriptionTimeout) {
+      const timeout = setTimeout(
+        () => {
+          this.unsubscribe(subscriptionID);
+          if (timeoutHandler) {
+            timeoutHandler();
+          }
+        },
+        subscriptionTimeout,
+      );
+      this.once(eventNamePrefix, () => {
+        cleared = true;
+        clearTimeout(timeout);
+      });
     }
 
     if (once) {
+      if (onceUnsubscribe === true) {
+        this.once(eventNamePrefix, () => {
+          if (!cleared) {
+            this.unsubscribe(subscriptionID);
+          }
+        });
+      }
       this.once(eventNamePrefix, listener);
     } else {
       this.on(eventNamePrefix, listener);
