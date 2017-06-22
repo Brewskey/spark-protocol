@@ -11,9 +11,14 @@ class EventProvider {
   }
 
   onNewEvent = (callback: (event: Event) => void) => {
-    this._eventPublisher.subscribe('*', this._onNewEvent(callback), {
-      filterOptions: {
-        listenToBroadcastedEvents: false,
+    this._eventPublisher.subscribe(
+      '*',
+      this._onNewEvent(callback),
+      {
+        filterOptions: {
+          listenToBroadcastedEvents: false,
+          listenToIPC: false,
+        },
       },
     });
   };

@@ -34,6 +34,7 @@ type FilterOptions = {
   connectionID?: ?string,
   deviceID?: string,
   listenToBroadcastedEvents?: boolean,
+  listenToIPC?: boolean,
   mydevices?: boolean,
   userID?: string,
 };
@@ -98,6 +99,7 @@ class EventPublisher extends EventEmitter {
             ...eventData.context,
             responseEventName,
           },
+          isIPC: true,
           isPublic: false,
           name: requestEventName,
         });
@@ -183,15 +185,19 @@ class EventPublisher extends EventEmitter {
   _filterEvents = (
     eventHandler: (event: Event) => void | Promise<void>,
     filterOptions: FilterOptions,
-  ): ((event: Event) => void) => (event: Event) => {
-    // filter private events from another devices
-    if (
-      filterOptions.userID &&
-      !event.isPublic &&
-      filterOptions.userID !== event.userID
-    ) {
-      return;
-    }
+  ): (event: Event) => void =>
+    (event: Event) => {
+      if (event.isIPC && filterOptions.listenToIPC === false) {
+        return;
+      }
+      // filter private events from another devices
+      if (
+        filterOptions.userID &&
+        !event.isPublic &&
+        filterOptions.userID !== event.userID
+      ) {
+        return;
+      }
 
     // filter private events with wrong connectionID
     if (
