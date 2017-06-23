@@ -18,7 +18,7 @@
 *
 */
 
-import type { Event, EventData } from '../types';
+import type { Event, EventData, PublishOptions } from '../types';
 
 import EventEmitter from 'events';
 import nullthrows from 'nullthrows';
@@ -34,7 +34,7 @@ type FilterOptions = {
   connectionID?: ?string,
   deviceID?: string,
   listenToBroadcastedEvents?: boolean,
-  listenToIPC?: boolean,
+  listenToInternalEvents?: boolean,
   mydevices?: boolean,
   userID?: string,
 };
@@ -42,7 +42,6 @@ type FilterOptions = {
 type SubscriptionOptions = {
   filterOptions?: FilterOptions,
   once?: boolean,
-  onceUnsubscribe?: boolean,
   subscriberID?: string,
   subscriptionTimeout?: number,
   timeoutHandler?: () => void,
@@ -55,16 +54,26 @@ type Subscription = {
   options: SubscriptionOptions,
 };
 
+
 class EventPublisher extends EventEmitter {
   _subscriptionsByID: Map<string, Subscription> = new Map();
 
-  publish = (eventData: EventData) => {
-    const ttl = eventData.ttl && eventData.ttl > 0
+  publish = (
+    eventData: EventData,
+    options: PublishOptions,
+  ) => {
+    const {
+      isInternal = false,
+      isPublic = false,
+    } = options || {};
+    const ttl = (eventData.ttl && eventData.ttl > 0)
       ? eventData.ttl
       : settings.DEFAULT_EVENT_TTL;
 
     const event: Event = {
       ...eventData,
+      isInternal,
+      isPublic,
       publishedAt: new Date(),
       ttl,
     };
@@ -87,28 +96,17 @@ class EventPublisher extends EventEmitter {
         const responseListener = (event: Event): void =>
           resolve(nullthrows(event.context));
 
-<<<<<<< 347a8d1a179d44b4c635b249e8008e44b60b52b2
-        this.subscribe(responseEventName, responseListener, {
-          once: true,
-          subscriptionTimeout: LISTEN_FOR_RESPONSE_TIMEOUT,
-          timeoutHandler: (): void =>
-            reject(new Error(`Response timeout for event: ${eventData.name}`)),
-        });
-=======
         this.subscribe(
           responseEventName,
           responseListener,
           {
             once: true,
-            onceUnsubscribe: true,  // Unsubscribe will be called by Eventpublisher
-                                    // in case of error on success in addition to once
             subscriptionTimeout: LISTEN_FOR_RESPONSE_TIMEOUT,
             timeoutHandler: (): void => reject(
               new Error(`Response timeout for event: ${eventData.name}`),
             ),
           },
         );
->>>>>>> added SubscriptionOption onceUnsubscribe so a publishAndListenForResponse call will call unsubscribe in case of success
 
         this.publish({
           ...eventData,
@@ -116,9 +114,10 @@ class EventPublisher extends EventEmitter {
             ...eventData.context,
             responseEventName,
           },
-          isIPC: true,
-          isPublic: false,
           name: requestEventName,
+        }, {
+          isInternal: true,
+          isPublic: false,
         });
       },
     );
@@ -132,7 +131,6 @@ class EventPublisher extends EventEmitter {
     const {
       filterOptions,
       once,
-      onceUnsubscribe,
       subscriptionTimeout,
       timeoutHandler,
     } = options;
@@ -153,8 +151,6 @@ class EventPublisher extends EventEmitter {
       options,
     });
 
-    let cleared = false;  // Specifiy if unsubscribe was called for this Subscription
-
     if (subscriptionTimeout) {
       const timeout = setTimeout(
         () => {
@@ -166,20 +162,15 @@ class EventPublisher extends EventEmitter {
         subscriptionTimeout,
       );
       this.once(eventNamePrefix, () => {
-        cleared = true;
         clearTimeout(timeout);
       });
     }
 
     if (once) {
-      if (onceUnsubscribe === true) {
-        this.once(eventNamePrefix, () => {
-          if (!cleared) {
-            this.unsubscribe(subscriptionID);
-          }
-        });
-      }
       this.once(eventNamePrefix, listener);
+      this.once(eventNamePrefix, () => {
+        this.unsubscribe(subscriptionID);
+      });
     } else {
       this.on(eventNamePrefix, listener);
     }
@@ -188,11 +179,11 @@ class EventPublisher extends EventEmitter {
   };
 
   unsubscribe = (subscriptionID: string) => {
-    const { eventNamePrefix, listener } = nullthrows(
-      this._subscriptionsByID.get(subscriptionID),
-    );
-
-    this.removeListener(eventNamePrefix, listener);
+    const subscription: Subscription = this._subscriptionsByID.get(subscriptionID);
+    if (!subscription) {
+      return;
+    }
+    this.removeListener(subscription.eventNamePrefix, subscription.listener);
     this._subscriptionsByID.delete(subscriptionID);
   };
 
@@ -219,7 +210,7 @@ class EventPublisher extends EventEmitter {
     filterOptions: FilterOptions,
   ): (event: Event) => void =>
     (event: Event) => {
-      if (event.isIPC && filterOptions.listenToIPC === false) {
+      if (event.isInternal && filterOptions.listenToInternalEvents === false) {
         return;
       }
       // filter private events from another devices
