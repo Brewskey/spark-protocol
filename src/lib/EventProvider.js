@@ -17,7 +17,7 @@ class EventProvider {
       {
         filterOptions: {
           listenToBroadcastedEvents: false,
-          listenToIPC: false,
+          listenToInternalEvents: false,
         },
       },
     );

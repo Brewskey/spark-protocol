@@ -30,6 +30,8 @@ export type DeviceKeyObject = {
 export type Event = EventData & {
   broadcasted?: boolean,
   publishedAt: Date,
+  isPublic: boolean,
+  isInternal: boolean,
 };
 
 export type EventData = {
@@ -37,8 +39,6 @@ export type EventData = {
   context?: ?Object,
   data?: string,
   deviceID?: ?string,
-  isPublic: boolean,
-  isIPC?: boolean,
   name: string,
   ttl?: number,
   userID?: string,
@@ -51,6 +51,11 @@ export type ServerKeyRepository = {
   }>,
   getPrivateKey: () => Promise<?string>,
 };
+
+export type PublishOptions = {
+  isInternal: boolean;
+  isPublic: boolean;
+}
 
 export interface IBaseRepository<TModel> {
   create(model: TModel | $Shape<TModel>): Promise<TModel>;

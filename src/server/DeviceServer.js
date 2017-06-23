@@ -19,7 +19,7 @@
 */
 
 import type { Socket } from 'net';
-import type { Event, IDeviceAttributeRepository } from '../types';
+import type { Event, EventData, IDeviceAttributeRepository, PublishOptions } from '../types';
 import type ClaimCodeManager from '../lib/ClaimCodeManager';
 import type CryptoManager from '../lib/CryptoManager';
 import type EventPublisher from '../lib/EventPublisher';
@@ -173,6 +173,7 @@ class DeviceServer {
           config.moduleIndex + 1,
           deviceID,
           ownerID,
+          false,
         );
 
         await device.flash(config.systemFile);
@@ -254,6 +255,7 @@ class DeviceServer {
                 'started',
                 deviceID,
                 ownerID,
+                false,
               );
             },
           );
@@ -268,6 +270,7 @@ class DeviceServer {
                 'success',
                 deviceID,
                 ownerID,
+                false,
               );
             },
           );
@@ -282,6 +285,7 @@ class DeviceServer {
                 'failed',
                 deviceID,
                 ownerID,
+                false,
               );
             },
           );
@@ -332,6 +336,7 @@ class DeviceServer {
             'online',
             deviceID,
             ownerID,
+            false,
           );
 
           // TODO
@@ -350,6 +355,7 @@ class DeviceServer {
               appHash,
               deviceID,
               ownerID,
+              false,
             );
           }
         } catch (error) {
@@ -387,6 +393,7 @@ class DeviceServer {
       'offline',
       deviceID,
       ownerID,
+      false,
     );
     logger.warn(
       `Session ended for device with ID: ${deviceID} with connectionKey: ` +
@@ -415,15 +422,17 @@ class DeviceServer {
       await device.hasStatus(DEVICE_STATUS_MAP.READY);
       const { deviceID, name, ownerID } = device.getAttributes();
 
-      const eventData = {
+      const eventData: EventData = {
         connectionID: device.getConnectionKey(),
         data: packet.payload.toString('utf8'),
         deviceID,
-        isPublic,
         name: CoapMessages.getUriPath(packet).substr(3),
         ttl: CoapMessages.getMaxAge(packet),
       };
-
+      const publishOptions: PublishOptions = {
+        isInternal: false,
+        isPublic,
+      };
       const eventName = eventData.name.toLowerCase();
 
       let shouldSwallowEvent = false;
@@ -434,7 +443,7 @@ class DeviceServer {
         // These should always be private but let's make sure. This way
         // if you are listening to a specific device you only see the system
         // events from it.
-        eventData.isPublic = false;
+        publishOptions.isPublic = false;
 
         shouldSwallowEvent = !SPECIAL_EVENTS.some(
           (specialEvent: string): boolean =>
@@ -446,7 +455,7 @@ class DeviceServer {
       }
 
       if (!shouldSwallowEvent && ownerID) {
-        this._eventPublisher.publish({ ...eventData, userID: ownerID });
+        this._eventPublisher.publish({ ...eventData, userID: ownerID }, publishOptions);
       }
 
       if (eventName.startsWith(SYSTEM_EVENT_NAMES.CLAIM_CODE)) {
@@ -459,6 +468,7 @@ class DeviceServer {
           device.getRemoteIPAddress(),
           deviceID,
           ownerID,
+          false,
         );
       }
 
@@ -468,6 +478,7 @@ class DeviceServer {
           name,
           deviceID,
           ownerID,
+          false,
         );
       }
 
@@ -482,6 +493,7 @@ class DeviceServer {
           cryptoString,
           deviceID,
           ownerID,
+          false,
         );
       }
 
@@ -498,6 +510,7 @@ class DeviceServer {
           eventData.data,
           deviceID,
           ownerID,
+          false,
         );
       }
 
@@ -515,6 +528,7 @@ class DeviceServer {
           eventData.data,
           deviceID,
           ownerID,
+          false,
         );
 
         if (this._areSystemFirmwareAutoupdatesEnabled) {
@@ -645,16 +659,18 @@ class DeviceServer {
 
       this._eventPublisher.publish({
         context: await device.callFunction(functionName, functionArguments),
-        isIPC: true,
-        isPublic: false,
         name: responseEventName,
+      }, {
+        isInternal: true,
+        isPublic: false,
       });
     } catch (error) {
       this._eventPublisher.publish({
         context: { error },
-        isIPC: true,
-        isPublic: false,
         name: responseEventName,
+      }, {
+        isInternal: true,
+        isPublic: false,
       });
     }
   };
@@ -673,16 +689,18 @@ class DeviceServer {
 
       this._eventPublisher.publish({
         context: await device.flash(fileBuffer),
-        isIPC: true,
-        isPublic: false,
         name: responseEventName,
+      }, {
+        isInternal: true,
+        isPublic: false,
       });
     } catch (error) {
       this._eventPublisher.publish({
         context: { error },
-        isIPC: true,
-        isPublic: false,
         name: responseEventName,
+      }, {
+        isInternal: true,
+        isPublic: false,
       });
     }
   };
@@ -702,16 +720,18 @@ class DeviceServer {
 
       this._eventPublisher.publish({
         context: device.getAttributes(),
-        isIPC: true,
-        isPublic: false,
         name: responseEventName,
+      }, {
+        isInternal: true,
+        isPublic: false,
       });
     } catch (error) {
       this._eventPublisher.publish({
         context: { error },
-        isIPC: true,
-        isPublic: false,
         name: responseEventName,
+      }, {
+        isInternal: true,
+        isPublic: false,
       });
     }
   };
@@ -731,16 +751,18 @@ class DeviceServer {
 
       this._eventPublisher.publish({
         context: { result: await device.getVariableValue(variableName) },
-        isIPC: true,
-        isPublic: false,
         name: responseEventName,
+      }, {
+        isInternal: true,
+        isPublic: false,
       });
     } catch (error) {
       this._eventPublisher.publish({
         context: { error },
-        isIPC: true,
-        isPublic: false,
         name: responseEventName,
+      }, {
+        isInternal: true,
+        isPublic: false,
       });
     }
   };
@@ -758,9 +780,10 @@ class DeviceServer {
 
     this._eventPublisher.publish({
       context: pingObject,
-      isIPC: true,
-      isPublic: false,
       name: responseEventName,
+    }, {
+      isInternal: true,
+      isPublic: false,
     });
   };
 
@@ -781,16 +804,18 @@ class DeviceServer {
 
       this._eventPublisher.publish({
         context: await device.raiseYourHand(shouldShowSignal),
-        isIPC: true,
-        isPublic: false,
         name: responseEventName,
+      }, {
+        isInternal: true,
+        isPublic: false,
       });
     } catch (error) {
       this._eventPublisher.publish({
         context: { error },
-        isIPC: true,
-        isPublic: false,
         name: responseEventName,
+      }, {
+        isInternal: true,
+        isPublic: false,
       });
     }
   };
@@ -813,16 +838,18 @@ class DeviceServer {
 
       this._eventPublisher.publish({
         context: await device.getAttributes(),
-        isIPC: true,
-        isPublic: false,
         name: responseEventName,
+      }, {
+        isInternal: true,
+        isPublic: false,
       });
     } catch (error) {
       this._eventPublisher.publish({
         context: { error },
-        isIPC: true,
-        isPublic: false,
         name: responseEventName,
+      }, {
+        isInternal: true,
+        isPublic: false,
       });
     }
   };
@@ -832,9 +859,10 @@ class DeviceServer {
 
   publishSpecialEvent = (
     eventName: string,
-    data: string,
+    data?: string,
     deviceID: string,
     userID: ?string,
+    isInternal?: boolean = false,
   ) => {
     if (!userID) {
       return;
@@ -842,36 +870,13 @@ class DeviceServer {
     const eventData = {
       data,
       deviceID,
-      isPublic: false,
       name: eventName,
       userID,
     };
     process.nextTick(() => {
-      this._eventPublisher.publish(eventData);
+      this._eventPublisher.publish(eventData, { isInternal, isPublic: false });
     });
   }
-  publishIPCEvent = (
-    eventName: string,
-    data: string,
-    deviceID: string,
-    userID: ?string,
-  ) => {
-    if (!userID) {
-      return;
-    }
-    const eventData = {
-      data,
-      deviceID,
-      isIPC: true,
-      isPublic: false,
-      name: eventName,
-      userID,
-    };
-    process.nextTick(() => {
-      this._eventPublisher.publish(eventData);
-    });
-  }
-
 }
 
 export default DeviceServer;
