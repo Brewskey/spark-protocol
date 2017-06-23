@@ -17,6 +17,6 @@ var ProtocolErrors = [[0, 'NO_ERROR'], [1, 'PING_TIMEOUT'], [2, 'IO_ERROR'], // 
  * NOTE: when adding more ProtocolError codes,
  * be sure to update toSystemError() in protocol_defs.cpp
  */
-[0x7FFFF, 'UNKNOWN']];
+[0x7ffff, 'UNKNOWN']];
 
 exports.default = new _map2.default(ProtocolErrors);

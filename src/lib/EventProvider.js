@@ -20,7 +20,7 @@ class EventProvider {
           listenToInternalEvents: false,
         },
       },
-    });
+    );
   };
 
   _onNewEvent = (callback: (event: Event) => void): (event: Event) => void =>

@@ -63,11 +63,11 @@ var SETTINGS_FILE = FILE_GEN_DIRECTORY + 'settings.json';
 /* eslint-disable */
 var DEFAULT_SETTINGS = {
   knownApps: {
-    'deep_update_2014_06': true,
-    'cc3000': true,
-    'cc3000_1_14': true,
-    'tinker': true,
-    'voodoo': true
+    deep_update_2014_06: true,
+    cc3000: true,
+    cc3000_1_14: true,
+    tinker: true,
+    voodoo: true
   },
   knownPlatforms: {
     '0': 'Core',
@@ -183,7 +183,7 @@ var updateSettings = function updateSettings() {
 
 var verifyBinariesMatch = function verifyBinariesMatch(downloadedBinaries, settingsBinaries) {
   if ((0, _stringify2.default)(downloadedBinaries.sort()) !== (0, _stringify2.default)(settingsBinaries.sort())) {
-    console.log('\n\nWARNING: the list of downloaded binaries doesn\'t match the list ' + 'of binaries in settings.js');
+    console.log("\n\nWARNING: the list of downloaded binaries doesn't match the list " + 'of binaries in settings.js');
     console.log('Downloaded:  ', downloadedBinaries);
     console.log('settings.js: ', settingsBinaries);
   }

@@ -29,7 +29,7 @@ var EventProvider = function EventProvider(eventPublisher) {
     _this._eventPublisher.subscribe(eventNamePrefix, _this._onNewEvent(callback), {
       filterOptions: {
         listenToBroadcastedEvents: false,
-        listenToIPC: false
+        listenToInternalEvents: false
       }
     });
   };

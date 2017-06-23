@@ -163,16 +163,6 @@ class DeviceServer {
       return;
     }
 
-<<<<<<< 4d5fc0f8739a40f7986f8abf158f2a0a02bb063c
-    setTimeout(async (): Promise<void> => {
-      this.publishSpecialEvent(
-        SYSTEM_EVENT_NAMES.SAFE_MODE_UPDATING,
-        // Lets the user know if it's the system update part 1/2/3
-        config.moduleIndex + 1,
-        deviceID,
-        ownerID,
-      );
-=======
     setTimeout(
       async (): Promise<void> => {
         this.publishSpecialEvent(
@@ -183,7 +173,6 @@ class DeviceServer {
           ownerID,
           false,
         );
->>>>>>> Reworked publish() and added other Changes
 
       await device.flash(config.systemFile);
     }, 1000);

@@ -63,8 +63,8 @@ class EventPublisher extends EventEmitter {
     options: PublishOptions,
   ) => {
     const {
-      isInternal = false,
-      isPublic = false,
+      isInternal,
+      isPublic,
     } = options || {};
     const ttl = (eventData.ttl && eventData.ttl > 0)
       ? eventData.ttl
@@ -169,12 +169,11 @@ class EventPublisher extends EventEmitter {
     if (once) {
       this.once(eventNamePrefix, listener);
       this.once(eventNamePrefix, () => {
-        this.unsubscribe(subscriptionID);
+        this._subscriptionsByID.delete(subscriptionID);
       });
     } else {
       this.on(eventNamePrefix, listener);
     }
-
     return subscriptionID;
   };
 

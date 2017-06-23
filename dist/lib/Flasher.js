@@ -142,7 +142,9 @@ function Flasher(client, maxBinarySize, otaChunkSize) {
                 break;
               }
 
-              _logger2.default.log('flash failed! - file is empty! ', { deviceID: _this._client.getDeviceID() });
+              _logger2.default.log('flash failed! - file is empty! ', {
+                deviceID: _this._client.getDeviceID()
+              });
 
               throw new Error('Update failed - File was empty!');
 
@@ -152,7 +154,9 @@ function Flasher(client, maxBinarySize, otaChunkSize) {
                 break;
               }
 
-              _logger2.default.log('flash failed! - file is too BIG ' + buffer.length, { deviceID: _this._client.getDeviceID() });
+              _logger2.default.log('flash failed! - file is too BIG ' + buffer.length, {
+                deviceID: _this._client.getDeviceID()
+              });
 
               throw new Error('Update failed - File was too big!');
 
@@ -285,11 +289,7 @@ function Flasher(client, maxBinarySize, otaChunkSize) {
 
                         case 7:
                           _context2.next = 9;
-                          return _promise2.default.race([_this._client.listenFor('UpdateReady',
-                          /* uri */null,
-                          /* token */null), _this._client.listenFor('UpdateAbort',
-                          /* uri */null,
-                          /* token */null).then(function (newPacket) {
+                          return _promise2.default.race([_this._client.listenFor('UpdateReady', /* uri */null, /* token */null), _this._client.listenFor('UpdateAbort', /* uri */null, /* token */null).then(function (newPacket) {
                             var failReason = '';
                             if (newPacket && newPacket.payload.length) {
                               failReason = !!newPacket.payload.readUInt8(0);
@@ -412,7 +412,9 @@ function Flasher(client, maxBinarySize, otaChunkSize) {
             canUseFastOTA = _this._fastOtaEnabled && _this._protocolVersion > 0;
 
             if (canUseFastOTA) {
-              _logger2.default.log('Starting FastOTA update', { deviceID: _this._client.getDeviceID() });
+              _logger2.default.log('Starting FastOTA update', {
+                deviceID: _this._client.getDeviceID()
+              });
             }
 
             _this._readNextChunk();
@@ -450,7 +452,7 @@ function Flasher(client, maxBinarySize, otaChunkSize) {
               break;
             }
 
-            throw new Error('\'ChunkReceived\' failed.');
+            throw new Error("'ChunkReceived' failed.");
 
           case 16:
             _context4.next = 5;
@@ -543,7 +545,7 @@ function Flasher(client, maxBinarySize, otaChunkSize) {
                           break;
                         }
 
-                        throw new Error('\'ChunkReceived\' failed.');
+                        throw new Error("'ChunkReceived' failed.");
 
                       case 12:
                       case 'end':
