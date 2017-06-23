@@ -24,18 +24,19 @@ var EventProvider = function EventProvider(eventPublisher) {
   (0, _classCallCheck3.default)(this, EventProvider);
 
   this.onNewEvent = function (callback) {
-    _this._eventPublisher.subscribe('*', _this._onNewEvent(callback), {
+    var eventNamePrefix = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : '*';
+
+    _this._eventPublisher.subscribe(eventNamePrefix, _this._onNewEvent(callback), {
       filterOptions: {
-        listenToBroadcastedEvents: false
+        listenToBroadcastedEvents: false,
+        listenToInternalEvents: false
       }
     });
   };
 
   this._onNewEvent = function (callback) {
     return function (event) {
-      var eventToBroadcast = (0, _extends3.default)({}, event, {
-        broadcasted: true
-      });
+      var eventToBroadcast = (0, _extends3.default)({}, event);
 
       callback(eventToBroadcast);
     };

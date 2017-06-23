@@ -151,7 +151,7 @@ var DeviceServer = function () {
                         case 0:
                           _this.publishSpecialEvent(_Device.SYSTEM_EVENT_NAMES.SAFE_MODE_UPDATING,
                           // Lets the user know if it's the system update part 1/2/3
-                          config.moduleIndex + 1, deviceID, ownerID);
+                          config.moduleIndex + 1, deviceID, ownerID, false);
 
                           _context.next = 3;
                           return device.flash(config.systemFile);
@@ -218,13 +218,11 @@ var DeviceServer = function () {
                           });
 
                           device.on(_Device.DEVICE_MESSAGE_EVENTS_NAMES.PRIVATE_EVENT, function (packet) {
-                            return _this._onDeviceSentMessage(packet,
-                            /* isPublic*/false, device);
+                            return _this._onDeviceSentMessage(packet, /* isPublic*/false, device);
                           });
 
                           device.on(_Device.DEVICE_MESSAGE_EVENTS_NAMES.PUBLIC_EVENT, function (packet) {
-                            return _this._onDeviceSentMessage(packet,
-                            /* isPublic*/true, device);
+                            return _this._onDeviceSentMessage(packet, /* isPublic*/true, device);
                           });
 
                           device.on(_Device.DEVICE_MESSAGE_EVENTS_NAMES.GET_TIME, function (packet) {
@@ -248,7 +246,7 @@ var DeviceServer = function () {
                                   case 2:
                                     _device$getAttributes2 = device.getAttributes(), ownerID = _device$getAttributes2.ownerID;
 
-                                    _this.publishSpecialEvent(_Device.SYSTEM_EVENT_NAMES.FLASH_STATUS, 'started', deviceID, ownerID);
+                                    _this.publishSpecialEvent(_Device.SYSTEM_EVENT_NAMES.FLASH_STATUS, 'started', deviceID, ownerID, false);
 
                                   case 4:
                                   case 'end':
@@ -271,7 +269,7 @@ var DeviceServer = function () {
                                   case 2:
                                     _device$getAttributes3 = device.getAttributes(), ownerID = _device$getAttributes3.ownerID;
 
-                                    _this.publishSpecialEvent(_Device.SYSTEM_EVENT_NAMES.FLASH_STATUS, 'success', deviceID, ownerID);
+                                    _this.publishSpecialEvent(_Device.SYSTEM_EVENT_NAMES.FLASH_STATUS, 'success', deviceID, ownerID, false);
 
                                   case 4:
                                   case 'end':
@@ -294,7 +292,7 @@ var DeviceServer = function () {
                                   case 2:
                                     _device$getAttributes4 = device.getAttributes(), ownerID = _device$getAttributes4.ownerID;
 
-                                    _this.publishSpecialEvent(_Device.SYSTEM_EVENT_NAMES.FLASH_STATUS, 'failed', deviceID, ownerID);
+                                    _this.publishSpecialEvent(_Device.SYSTEM_EVENT_NAMES.FLASH_STATUS, 'failed', deviceID, ownerID, false);
 
                                   case 4:
                                   case 'end':
@@ -341,7 +339,7 @@ var DeviceServer = function () {
 
                           device.setStatus(_Device.DEVICE_STATUS_MAP.READY);
 
-                          _this.publishSpecialEvent(_Device.SYSTEM_EVENT_NAMES.SPARK_STATUS, 'online', deviceID, ownerID);
+                          _this.publishSpecialEvent(_Device.SYSTEM_EVENT_NAMES.SPARK_STATUS, 'online', deviceID, ownerID, false);
 
                           // TODO
                           // we may update attributes only on disconnect, but currently
@@ -354,7 +352,7 @@ var DeviceServer = function () {
 
                           // Send app-hash if this is a new app firmware
                           if (!existingAttributes || appHash !== existingAttributes.appHash) {
-                            _this.publishSpecialEvent(_Device.SYSTEM_EVENT_NAMES.APP_HASH, appHash, deviceID, ownerID);
+                            _this.publishSpecialEvent(_Device.SYSTEM_EVENT_NAMES.APP_HASH, appHash, deviceID, ownerID, false);
                           }
                           _context6.next = 30;
                           break;
@@ -428,7 +426,7 @@ var DeviceServer = function () {
 
               case 11:
 
-                _this.publishSpecialEvent(_Device.SYSTEM_EVENT_NAMES.SPARK_STATUS, 'offline', deviceID, ownerID);
+                _this.publishSpecialEvent(_Device.SYSTEM_EVENT_NAMES.SPARK_STATUS, 'offline', deviceID, ownerID, false);
                 _logger2.default.warn('Session ended for device with ID: ' + deviceID + ' with connectionKey: ' + ('' + (connectionKey || 'no connection key')));
 
               case 13:
@@ -453,7 +451,7 @@ var DeviceServer = function () {
 
     this._onDeviceSentMessage = function () {
       var _ref10 = (0, _asyncToGenerator3.default)(_regenerator2.default.mark(function _callee9(packet, isPublic, device) {
-        var _device$getAttributes5, deviceID, name, ownerID, eventData, eventName, shouldSwallowEvent, cryptoString;
+        var _device$getAttributes5, deviceID, name, ownerID, eventData, publishOptions, eventName, shouldSwallowEvent, cryptoString;
 
         return _regenerator2.default.wrap(function _callee9$(_context9) {
           while (1) {
@@ -469,9 +467,12 @@ var DeviceServer = function () {
                   connectionID: device.getConnectionKey(),
                   data: packet.payload.toString('utf8'),
                   deviceID: deviceID,
-                  isPublic: isPublic,
                   name: _CoapMessages2.default.getUriPath(packet).substr(3),
                   ttl: _CoapMessages2.default.getMaxAge(packet)
+                };
+                publishOptions = {
+                  isInternal: false,
+                  isPublic: isPublic
                 };
                 eventName = eventData.name.toLowerCase();
                 shouldSwallowEvent = false;
@@ -483,7 +484,7 @@ var DeviceServer = function () {
                   // These should always be private but let's make sure. This way
                   // if you are listening to a specific device you only see the system
                   // events from it.
-                  eventData.isPublic = false;
+                  publishOptions.isPublic = false;
 
                   shouldSwallowEvent = !SPECIAL_EVENTS.some(function (specialEvent) {
                     return eventName.startsWith(specialEvent);
@@ -494,32 +495,32 @@ var DeviceServer = function () {
                 }
 
                 if (!shouldSwallowEvent && ownerID) {
-                  _this._eventPublisher.publish((0, _extends3.default)({}, eventData, { userID: ownerID }));
+                  _this._eventPublisher.publish((0, _extends3.default)({}, eventData, { userID: ownerID }), publishOptions);
                 }
 
                 if (!eventName.startsWith(_Device.SYSTEM_EVENT_NAMES.CLAIM_CODE)) {
-                  _context9.next = 12;
+                  _context9.next = 13;
                   break;
                 }
 
-                _context9.next = 12;
+                _context9.next = 13;
                 return _this._onDeviceClaimCodeMessage(packet, device);
 
-              case 12:
+              case 13:
 
                 if (eventName.startsWith(_Device.SYSTEM_EVENT_NAMES.GET_IP)) {
-                  _this.publishSpecialEvent(_Device.SYSTEM_EVENT_NAMES.GET_NAME, device.getRemoteIPAddress(), deviceID, ownerID);
+                  _this.publishSpecialEvent(_Device.SYSTEM_EVENT_NAMES.GET_NAME, device.getRemoteIPAddress(), deviceID, ownerID, false);
                 }
 
                 if (eventName.startsWith(_Device.SYSTEM_EVENT_NAMES.GET_NAME)) {
-                  _this.publishSpecialEvent(_Device.SYSTEM_EVENT_NAMES.GET_NAME, name, deviceID, ownerID);
+                  _this.publishSpecialEvent(_Device.SYSTEM_EVENT_NAMES.GET_NAME, name, deviceID, ownerID, false);
                 }
 
                 if (eventName.startsWith(_Device.SYSTEM_EVENT_NAMES.GET_RANDOM_BUFFER)) {
                   cryptoString = _crypto2.default.randomBytes(40).toString('base64').substring(0, 40);
 
 
-                  _this.publishSpecialEvent(_Device.SYSTEM_EVENT_NAMES.GET_RANDOM_BUFFER, cryptoString, deviceID, ownerID);
+                  _this.publishSpecialEvent(_Device.SYSTEM_EVENT_NAMES.GET_RANDOM_BUFFER, cryptoString, deviceID, ownerID, false);
                 }
 
                 if (eventName.startsWith(_Device.SYSTEM_EVENT_NAMES.IDENTITY)) {
@@ -530,7 +531,7 @@ var DeviceServer = function () {
                 }
 
                 if (eventName.startsWith(_Device.SYSTEM_EVENT_NAMES.LAST_RESET)) {
-                  _this.publishSpecialEvent(_Device.SYSTEM_EVENT_NAMES.LAST_RESET, eventData.data, deviceID, ownerID);
+                  _this.publishSpecialEvent(_Device.SYSTEM_EVENT_NAMES.LAST_RESET, eventData.data, deviceID, ownerID, false);
                 }
 
                 if (eventName.startsWith(_Device.SYSTEM_EVENT_NAMES.MAX_BINARY)) {
@@ -542,21 +543,21 @@ var DeviceServer = function () {
                 }
 
                 if (!eventName.startsWith(_Device.SYSTEM_EVENT_NAMES.SAFE_MODE)) {
-                  _context9.next = 24;
+                  _context9.next = 25;
                   break;
                 }
 
-                _this.publishSpecialEvent(_Device.SYSTEM_EVENT_NAMES.SAFE_MODE, eventData.data, deviceID, ownerID);
+                _this.publishSpecialEvent(_Device.SYSTEM_EVENT_NAMES.SAFE_MODE, eventData.data, deviceID, ownerID, false);
 
                 if (!_this._areSystemFirmwareAutoupdatesEnabled) {
-                  _context9.next = 24;
+                  _context9.next = 25;
                   break;
                 }
 
-                _context9.next = 24;
+                _context9.next = 25;
                 return _this._updateDeviceSystemFirmware(device);
 
-              case 24:
+              case 25:
 
                 if (eventName.startsWith(_Device.SYSTEM_EVENT_NAMES.SPARK_SUBSYSTEM)) {
                   // TODO: Test this with a Core device
@@ -564,21 +565,21 @@ var DeviceServer = function () {
                   // compare with version on disc
                   // if device version is old, do OTA update with patch
                 }
-                _context9.next = 30;
+                _context9.next = 31;
                 break;
 
-              case 27:
-                _context9.prev = 27;
+              case 28:
+                _context9.prev = 28;
                 _context9.t0 = _context9['catch'](0);
 
                 _logger2.default.error(_context9.t0);
 
-              case 30:
+              case 31:
               case 'end':
                 return _context9.stop();
             }
           }
-        }, _callee9, _this, [[0, 27]]);
+        }, _callee9, _this, [[0, 28]]);
       }));
 
       return function (_x4, _x5, _x6) {
@@ -750,31 +751,36 @@ var DeviceServer = function () {
                 _context12.t2 = responseEventName;
                 _context12.t3 = {
                   context: _context12.t1,
-                  isPublic: false,
                   name: _context12.t2
                 };
+                _context12.t4 = {
+                  isInternal: true,
+                  isPublic: false
+                };
 
-                _context12.t0.publish.call(_context12.t0, _context12.t3);
+                _context12.t0.publish.call(_context12.t0, _context12.t3, _context12.t4);
 
-                _context12.next = 17;
+                _context12.next = 18;
                 break;
 
-              case 14:
-                _context12.prev = 14;
-                _context12.t4 = _context12['catch'](1);
+              case 15:
+                _context12.prev = 15;
+                _context12.t5 = _context12['catch'](1);
 
                 _this._eventPublisher.publish({
-                  context: { error: _context12.t4 },
-                  isPublic: false,
+                  context: { error: _context12.t5 },
                   name: responseEventName
+                }, {
+                  isInternal: true,
+                  isPublic: false
                 });
 
-              case 17:
+              case 18:
               case 'end':
                 return _context12.stop();
             }
           }
-        }, _callee12, _this, [[1, 14]]);
+        }, _callee12, _this, [[1, 15]]);
       }));
 
       return function (_x11) {
@@ -811,31 +817,36 @@ var DeviceServer = function () {
                 _context13.t2 = responseEventName;
                 _context13.t3 = {
                   context: _context13.t1,
-                  isPublic: false,
                   name: _context13.t2
                 };
+                _context13.t4 = {
+                  isInternal: true,
+                  isPublic: false
+                };
 
-                _context13.t0.publish.call(_context13.t0, _context13.t3);
+                _context13.t0.publish.call(_context13.t0, _context13.t3, _context13.t4);
 
-                _context13.next = 17;
+                _context13.next = 18;
                 break;
 
-              case 14:
-                _context13.prev = 14;
-                _context13.t4 = _context13['catch'](1);
+              case 15:
+                _context13.prev = 15;
+                _context13.t5 = _context13['catch'](1);
 
                 _this._eventPublisher.publish({
-                  context: { error: _context13.t4 },
-                  isPublic: false,
+                  context: { error: _context13.t5 },
                   name: responseEventName
+                }, {
+                  isInternal: true,
+                  isPublic: false
                 });
 
-              case 17:
+              case 18:
               case 'end':
                 return _context13.stop();
             }
           }
-        }, _callee13, _this, [[1, 14]]);
+        }, _callee13, _this, [[1, 15]]);
       }));
 
       return function (_x12) {
@@ -870,8 +881,10 @@ var DeviceServer = function () {
 
                 _this._eventPublisher.publish({
                   context: device.getAttributes(),
-                  isPublic: false,
                   name: responseEventName
+                }, {
+                  isInternal: true,
+                  isPublic: false
                 });
                 _context14.next = 13;
                 break;
@@ -882,8 +895,10 @@ var DeviceServer = function () {
 
                 _this._eventPublisher.publish({
                   context: { error: _context14.t0 },
-                  isPublic: false,
                   name: responseEventName
+                }, {
+                  isInternal: true,
+                  isPublic: false
                 });
 
               case 13:
@@ -931,31 +946,36 @@ var DeviceServer = function () {
                 _context15.t3 = responseEventName;
                 _context15.t4 = {
                   context: _context15.t2,
-                  isPublic: false,
                   name: _context15.t3
                 };
+                _context15.t5 = {
+                  isInternal: true,
+                  isPublic: false
+                };
 
-                _context15.t0.publish.call(_context15.t0, _context15.t4);
+                _context15.t0.publish.call(_context15.t0, _context15.t4, _context15.t5);
 
-                _context15.next = 18;
+                _context15.next = 19;
                 break;
 
-              case 15:
-                _context15.prev = 15;
-                _context15.t5 = _context15['catch'](1);
+              case 16:
+                _context15.prev = 16;
+                _context15.t6 = _context15['catch'](1);
 
                 _this._eventPublisher.publish({
-                  context: { error: _context15.t5 },
-                  isPublic: false,
+                  context: { error: _context15.t6 },
                   name: responseEventName
+                }, {
+                  isInternal: true,
+                  isPublic: false
                 });
 
-              case 18:
+              case 19:
               case 'end':
                 return _context15.stop();
             }
           }
-        }, _callee15, _this, [[1, 15]]);
+        }, _callee15, _this, [[1, 16]]);
       }));
 
       return function (_x14) {
@@ -981,8 +1001,10 @@ var DeviceServer = function () {
 
                 _this._eventPublisher.publish({
                   context: pingObject,
-                  isPublic: false,
                   name: responseEventName
+                }, {
+                  isInternal: true,
+                  isPublic: false
                 });
 
               case 4:
@@ -1031,31 +1053,36 @@ var DeviceServer = function () {
                 _context17.t2 = responseEventName;
                 _context17.t3 = {
                   context: _context17.t1,
-                  isPublic: false,
                   name: _context17.t2
                 };
+                _context17.t4 = {
+                  isInternal: true,
+                  isPublic: false
+                };
 
-                _context17.t0.publish.call(_context17.t0, _context17.t3);
+                _context17.t0.publish.call(_context17.t0, _context17.t3, _context17.t4);
 
-                _context17.next = 19;
+                _context17.next = 20;
                 break;
 
-              case 16:
-                _context17.prev = 16;
-                _context17.t4 = _context17['catch'](1);
+              case 17:
+                _context17.prev = 17;
+                _context17.t5 = _context17['catch'](1);
 
                 _this._eventPublisher.publish({
-                  context: { error: _context17.t4 },
-                  isPublic: false,
+                  context: { error: _context17.t5 },
                   name: responseEventName
+                }, {
+                  isInternal: true,
+                  isPublic: false
                 });
 
-              case 19:
+              case 20:
               case 'end':
                 return _context17.stop();
             }
           }
-        }, _callee17, _this, [[1, 16]]);
+        }, _callee17, _this, [[1, 17]]);
       }));
 
       return function (_x16) {
@@ -1098,31 +1125,36 @@ var DeviceServer = function () {
                 _context18.t2 = responseEventName;
                 _context18.t3 = {
                   context: _context18.t1,
-                  isPublic: false,
                   name: _context18.t2
                 };
+                _context18.t4 = {
+                  isInternal: true,
+                  isPublic: false
+                };
 
-                _context18.t0.publish.call(_context18.t0, _context18.t3);
+                _context18.t0.publish.call(_context18.t0, _context18.t3, _context18.t4);
 
-                _context18.next = 20;
+                _context18.next = 21;
                 break;
 
-              case 17:
-                _context18.prev = 17;
-                _context18.t4 = _context18['catch'](1);
+              case 18:
+                _context18.prev = 18;
+                _context18.t5 = _context18['catch'](1);
 
                 _this._eventPublisher.publish({
-                  context: { error: _context18.t4 },
-                  isPublic: false,
+                  context: { error: _context18.t5 },
                   name: responseEventName
+                }, {
+                  isInternal: true,
+                  isPublic: false
                 });
 
-              case 20:
+              case 21:
               case 'end':
                 return _context18.stop();
             }
           }
-        }, _callee18, _this, [[1, 17]]);
+        }, _callee18, _this, [[1, 18]]);
       }));
 
       return function (_x17) {
@@ -1135,18 +1167,19 @@ var DeviceServer = function () {
     };
 
     this.publishSpecialEvent = function (eventName, data, deviceID, userID) {
+      var isInternal = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : false;
+
       if (!userID) {
         return;
       }
       var eventData = {
         data: data,
         deviceID: deviceID,
-        isPublic: false,
         name: eventName,
         userID: userID
       };
       process.nextTick(function () {
-        _this._eventPublisher.publish(eventData);
+        _this._eventPublisher.publish(eventData, { isInternal: isInternal, isPublic: false });
       });
     };
 

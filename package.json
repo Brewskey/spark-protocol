@@ -38,7 +38,7 @@
     ]
   },
   "pre-commit": [
-    "lint-staged",
+    "lint",
     "test"
   ],
   "ava": {

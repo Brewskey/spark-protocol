@@ -521,7 +521,9 @@ var Device = function (_EventEmitter) {
       var packet = _CoapMessages2.default.unwrap(data);
 
       if (!packet) {
-        _logger2.default.error('routeMessage got a NULL coap message ', { deviceID: _this.getDeviceID() });
+        _logger2.default.error('routeMessage got a NULL coap message ', {
+          deviceID: _this.getDeviceID()
+        });
         return;
       }
 
@@ -594,12 +596,16 @@ var Device = function (_EventEmitter) {
 
       var message = _CoapMessages2.default.wrap(messageName, id, null, null, data, token);
       if (!message) {
-        _logger2.default.error('Device - could not unwrap message', { deviceID: _this.getDeviceID() });
+        _logger2.default.error('Device - could not unwrap message', {
+          deviceID: _this.getDeviceID()
+        });
         return;
       }
 
       if (!_this._cipherStream) {
-        _logger2.default.error('Device - sendReply before READY', { deviceID: _this.getDeviceID() });
+        _logger2.default.error('Device - sendReply before READY', {
+          deviceID: _this.getDeviceID()
+        });
         return;
       }
       _this._cipherStream.write(message);
@@ -629,7 +635,10 @@ var Device = function (_EventEmitter) {
       }
 
       if (!_this._cipherStream) {
-        _logger2.default.error('Client - sendMessage before READY', { deviceID: _this.getDeviceID(), messageName: messageName });
+        _logger2.default.error('Client - sendMessage before READY', {
+          deviceID: _this.getDeviceID(),
+          messageName: messageName
+        });
       }
 
       process.nextTick(function () {
@@ -660,7 +669,9 @@ var Device = function (_EventEmitter) {
                     var packetUri = _CoapMessages2.default.getUriPath(packet);
                     if (uri && packetUri.indexOf(uri) !== 0) {
                       if (beVerbose) {
-                        _logger2.default.log('URI filter did not match', uri, packetUri, { deviceID: _this.getDeviceID() });
+                        _logger2.default.log('URI filter did not match', uri, packetUri, {
+                          deviceID: _this.getDeviceID()
+                        });
                       }
                       return;
                     }
@@ -668,7 +679,9 @@ var Device = function (_EventEmitter) {
                     var packetTokenHex = packet.token.toString('hex');
                     if (tokenHex && tokenHex !== packetTokenHex) {
                       if (beVerbose) {
-                        _logger2.default.log('Tokens did not match ', tokenHex, packetTokenHex, { deviceID: _this.getDeviceID() });
+                        _logger2.default.log('Tokens did not match ', tokenHex, packetTokenHex, {
+                          deviceID: _this.getDeviceID()
+                        });
                       }
                       return;
                     }
@@ -831,7 +844,10 @@ var Device = function (_EventEmitter) {
 
               case 7:
 
-                _logger2.default.log('sending function call to the device', { deviceID: _this.getDeviceID(), functionName: functionName });
+                _logger2.default.log('sending function call to the device', {
+                  deviceID: _this.getDeviceID(),
+                  functionName: functionName
+                });
 
                 token = _this.sendMessage('FunctionCall', {
                   args: (0, _values2.default)(functionArguments),
@@ -928,7 +944,9 @@ var Device = function (_EventEmitter) {
                 flasher = new _Flasher2.default(_this, _this._maxBinarySize, _this._otaChunkSize);
                 _context9.prev = 4;
 
-                _logger2.default.log('flash device started! - sending api event', { deviceID: _this.getDeviceID() });
+                _logger2.default.log('flash device started! - sending api event', {
+                  deviceID: _this.getDeviceID()
+                });
 
                 _this.emit(DEVICE_EVENT_NAMES.FLASH_STARTED);
 
@@ -937,7 +955,9 @@ var Device = function (_EventEmitter) {
 
               case 9:
 
-                _logger2.default.log('flash device finished! - sending api event', { deviceID: _this.getDeviceID() });
+                _logger2.default.log('flash device finished! - sending api event', {
+                  deviceID: _this.getDeviceID()
+                });
 
                 _this.emit(DEVICE_EVENT_NAMES.FLASH_SUCCESS);
 
@@ -947,7 +967,10 @@ var Device = function (_EventEmitter) {
                 _context9.prev = 14;
                 _context9.t0 = _context9['catch'](4);
 
-                _logger2.default.log('flash device failed! - sending api event', { deviceID: _this.getDeviceID(), error: _context9.t0 });
+                _logger2.default.log('flash device failed! - sending api event', {
+                  deviceID: _this.getDeviceID(),
+                  error: _context9.t0
+                });
 
                 _this.emit(DEVICE_EVENT_NAMES.FLASH_FAILED);
                 throw new Error('Update failed: ' + _context9.t0.message);
@@ -994,7 +1017,7 @@ var Device = function (_EventEmitter) {
       if (_this._owningFlasher === flasher) {
         _this._owningFlasher = null;
       } else if (_this._owningFlasher) {
-        _logger2.default.error('cannot releaseOwnership, ', flasher, ' isn\'t the current owner ', { deviceID: _this.getDeviceID() });
+        _logger2.default.error('cannot releaseOwnership, ', flasher, " isn't the current owner ", { deviceID: _this.getDeviceID() });
       }
     };
 
