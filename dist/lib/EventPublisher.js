@@ -232,30 +232,36 @@ var EventPublisher = function (_EventEmitter) {
     }, _this._filterEvents = function (eventHandler, filterOptions) {
       return function (event) {
         if (event.isInternal && filterOptions.listenToInternalEvents === false) {
+          console.log('1');
           return;
         }
         // filter private events from another devices
         if (filterOptions.userID && !event.isPublic && filterOptions.userID !== event.userID) {
+          console.log('2');
           return;
         }
 
         // filter private events with wrong connectionID
         if (!event.isPublic && filterOptions.connectionID && event.connectionID !== filterOptions.connectionID) {
+          console.log('3');
           return;
         }
 
         // filter mydevices events
         if (filterOptions.mydevices && filterOptions.userID !== event.userID) {
+          console.log('4');
           return;
         }
 
         // filter event by deviceID
         if (filterOptions.deviceID && event.deviceID !== filterOptions.deviceID) {
+          console.log('5');
           return;
         }
 
         // filter broadcasted events
         if (filterOptions.listenToBroadcastedEvents === false && event.broadcasted) {
+          console.log('6');
           return;
         }
 
