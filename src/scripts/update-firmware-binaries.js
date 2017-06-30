@@ -234,20 +234,24 @@ const downloadAppBinaries = async (): Promise<*> => {
     repo: GITHUB_FIRMWARE_REPOSITORY,
   });
 
-  const versionText = new Buffer(versionResponse.content, 'base64').toString();
-  const startIndex = versionText.indexOf('| 0 ');
-  const endIndex = versionText.indexOf('\n\n', startIndex);
+  const versionText =
+    new Buffer(versionResponse.content, 'base64').toString() || '';
   const data = versionText
-    .substring(startIndex, endIndex)
-    .replace(/\s/g, '')
-    .split('|');
-
+    .match(/^\|[^\n]*/gim)
+    .map((line: string): Array<string> => line.split('|').slice(2, 5))
+    .filter((arr: Array<string>): boolean => !isNaN(parseInt(arr[0], 10)))
+    .map((vdata: Array<any>): Array => [
+      vdata[0].replace(/\s+/g, ''),
+      vdata[1].replace(/\s+/g, ''),
+    ]);
+  if (data.length === 0) {
+    console.log(
+      'cant parse system-versions from https://github.com/spark/firmware/blob/develop/system/system-versions.md',
+    );
+  }
   const mapping = [];
-  for (let ii = 0; ii < data.length; ii += 4) {
-    if (!data[ii + 1]) {
-      continue; // eslint-disable-line no-continue
-    }
-    mapping.push([data[ii + 1], data[ii + 2]]);
+  for (let line = 0; line < data.length; line += 1) {
+    mapping.push(data[line]);
   }
   fs.writeFileSync(MAPPING_FILE, JSON.stringify(mapping, null, 2));
 

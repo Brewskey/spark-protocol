@@ -227,7 +227,7 @@ var downloadAppBinaries = function () {
 }();
 
 (0, _asyncToGenerator3.default)(_regenerator2.default.mark(function _callee3() {
-  var releases, release, downloadedBinaries, settingsBinaries, specificationsResponse, versionResponse, versionText, startIndex, endIndex, data, mapping, ii;
+  var releases, release, downloadedBinaries, settingsBinaries, specificationsResponse, versionResponse, versionText, data, mapping, line;
   return _regenerator2.default.wrap(function _callee3$(_context3) {
     while (1) {
       switch (_context3.prev = _context3.next) {
@@ -330,40 +330,28 @@ var downloadAppBinaries = function () {
 
         case 29:
           versionResponse = _context3.sent;
-          versionText = new Buffer(versionResponse.content, 'base64').toString();
-          startIndex = versionText.indexOf('| 0 ');
-          endIndex = versionText.indexOf('\n\n', startIndex);
-          data = versionText.substring(startIndex, endIndex).replace(/\s/g, '').split('|');
+          versionText = new Buffer(versionResponse.content, 'base64').toString() || '';
+          data = versionText.match(/^\|[^\n]*/gim).map(function (line) {
+            return line.split('|').slice(2, 5);
+          }).filter(function (arr) {
+            return !isNaN(parseInt(arr[0], 10));
+          }).map(function (vdata) {
+            return [vdata[0].replace(/\s+/g, ''), vdata[1].replace(/\s+/g, '')];
+          });
+
+          if (data.length === 0) {
+            console.log('cant parse system-versions from https://github.com/spark/firmware/blob/develop/system/system-versions.md');
+          }
           mapping = [];
-          ii = 0;
 
-        case 36:
-          if (!(ii < data.length)) {
-            _context3.next = 43;
-            break;
+          for (line = 0; line < data.length; line += 1) {
+            mapping.push(data[line]);
           }
-
-          if (data[ii + 1]) {
-            _context3.next = 39;
-            break;
-          }
-
-          return _context3.abrupt('continue', 40);
-
-        case 39:
-          mapping.push([data[ii + 1], data[ii + 2]]);
-
-        case 40:
-          ii += 4;
-          _context3.next = 36;
-          break;
-
-        case 43:
           _fs2.default.writeFileSync(MAPPING_FILE, (0, _stringify2.default)(mapping, null, 2));
 
           console.log('\r\nCompleted Sync');
 
-        case 45:
+        case 37:
         case 'end':
           return _context3.stop();
       }
