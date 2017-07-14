@@ -1007,11 +1007,13 @@ class Device extends EventEmitter {
     !!(this._attributes.variables && this._attributes.variables[name]);
 
   _hasSparkFunction = (functionName: string): boolean =>
-    !!(this._attributes.functions &&
+    !!(
+      this._attributes.functions &&
       this._attributes.functions.some(
         (fn: string): boolean =>
           fn.toLowerCase() === functionName.toLowerCase(),
-      ));
+      )
+    );
 
   _toHexString = (value: number): string =>
     (value < 10 ? '0' : '') + value.toString(16);
@@ -1021,9 +1023,9 @@ class Device extends EventEmitter {
   getConnectionKey = (): ?string => this._connectionKey;
 
   getRemoteIPAddress = (): string =>
-    (this._socket.remoteAddress
+    this._socket.remoteAddress
       ? this._socket.remoteAddress.toString()
-      : 'unknown');
+      : 'unknown';
 
   disconnect = (message: ?string = '') => {
     this._disconnectCounter += 1;

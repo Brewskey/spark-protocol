@@ -85,7 +85,9 @@ class EventPublisher extends EventEmitter {
     eventData: EventData,
   ): Promise<Object> => {
     const eventID = uuid();
-    const requestEventName = `${getRequestEventName(eventData.name)}/${eventID}`;
+    const requestEventName = `${getRequestEventName(
+      eventData.name,
+    )}/${eventID}`;
     const responseEventName = `${eventData.name}/response/${eventID}`;
 
     return new Promise(

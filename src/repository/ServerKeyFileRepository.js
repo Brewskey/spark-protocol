@@ -19,7 +19,10 @@ class ServerKeyFileRepository {
     publicKeyPem: Buffer,
   }> => {
     const extIdx = this._serverKeyFileName.lastIndexOf('.');
-    const pubPemFilename = `${this._serverKeyFileName.substring(0, extIdx)}.pub.pem`;
+    const pubPemFilename = `${this._serverKeyFileName.substring(
+      0,
+      extIdx,
+    )}.pub.pem`;
 
     this._fileManager.createFile(this._serverKeyFileName, privateKeyPem);
     this._fileManager.createFile(pubPemFilename, publicKeyPem);
