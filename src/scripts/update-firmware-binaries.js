@@ -9,7 +9,7 @@ import request from 'request';
 import settings from '../settings';
 import nullthrows from 'nullthrows';
 
-const GITHUB_USER = 'spark';
+const GITHUB_USER = 'particle-iot';
 const GITHUB_FIRMWARE_REPOSITORY = 'firmware';
 const GITHUB_CLI_REPOSITORY = 'particle-cli';
 const FILE_GEN_DIRECTORY = path.join(__dirname, '../../third-party/');
@@ -58,9 +58,9 @@ const DEFAULT_SETTINGS = {
   },
 };
 
-const FIRMWARE_PLATFORMS = Object.values(DEFAULT_SETTINGS.knownPlatforms).map(
-  platform => (platform: any).toLowerCase(),
-);
+const FIRMWARE_PLATFORMS = Object.values(
+  DEFAULT_SETTINGS.knownPlatforms,
+).map(platform => (platform: any).toLowerCase());
 /* eslint-enable */
 
 const githubAPI = new Github();
@@ -188,7 +188,7 @@ const verifyBinariesMatch = (
 const downloadAppBinaries = async (): Promise<*> => {
   const assets = await githubAPI.repos.getContent({
     owner: GITHUB_USER,
-    path: 'binaries',
+    path: 'assets/binaries',
     repo: GITHUB_CLI_REPOSITORY,
   });
 
@@ -255,7 +255,7 @@ const downloadAppBinaries = async (): Promise<*> => {
 
   const specificationsResponse = await githubAPI.repos.getContent({
     owner: GITHUB_USER,
-    path: 'oldlib/deviceSpecs/specifications.js',
+    path: 'src/lib/deviceSpecs/specifications.js',
     repo: GITHUB_CLI_REPOSITORY,
   });
 
