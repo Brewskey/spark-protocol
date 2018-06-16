@@ -1319,7 +1319,7 @@ var DeviceServer = function () {
 
     this._flashDevice = function () {
       var _ref23 = (0, _asyncToGenerator3.default)(_regenerator2.default.mark(function _callee22(productDevice) {
-        var device, productFirmware, lockedFirmwareVersion, _device$getAttributes7, productFirmwareVersion, particleProductId, deviceAttributes, systemInformation, isMissingDependency, oldProductFirmware;
+        var device, productFirmware, lockedFirmwareVersion, _device$getAttributes7, productFirmwareVersion, particleProductId, systemInformation, isMissingDependency, oldProductFirmware;
 
         return _regenerator2.default.wrap(function _callee22$(_context23) {
           while (1) {
@@ -1403,55 +1403,42 @@ var DeviceServer = function () {
                 return _context23.abrupt('return');
 
               case 26:
-
-                // Check if product is in safe mode. For some reason it returns this weird
-                // firmware code when it's in this state.
-                deviceAttributes = device.getAttributes();
-
-                if (!(deviceAttributes.productFirmwareVersion === 65535)) {
-                  _context23.next = 29;
-                  break;
-                }
-
-                return _context23.abrupt('return');
-
-              case 29:
                 systemInformation = device.getSystemInformation();
                 isMissingDependency = _FirmwareManager2.default.isMissingOTAUpdate(systemInformation);
 
                 if (!isMissingDependency) {
-                  _context23.next = 33;
+                  _context23.next = 30;
                   break;
                 }
 
                 return _context23.abrupt('return');
 
-              case 33:
-                _context23.next = 35;
+              case 30:
+                _context23.next = 32;
                 return device.flash(productFirmware.data);
 
-              case 35:
-                _context23.next = 37;
+              case 32:
+                _context23.next = 34;
                 return _this._productFirmwareRepository.getByVersionForProduct(productDevice.productID, productFirmwareVersion);
 
-              case 37:
+              case 34:
                 oldProductFirmware = _context23.sent;
 
                 if (!oldProductFirmware) {
-                  _context23.next = 42;
+                  _context23.next = 39;
                   break;
                 }
 
                 oldProductFirmware.device_count -= 1;
-                _context23.next = 42;
+                _context23.next = 39;
                 return _this._productFirmwareRepository.updateByID(oldProductFirmware.id, oldProductFirmware);
 
-              case 42:
+              case 39:
                 productFirmware.device_count += 1;
-                _context23.next = 45;
+                _context23.next = 42;
                 return _this._productFirmwareRepository.updateByID(productFirmware.id, productFirmware);
 
-              case 45:
+              case 42:
               case 'end':
                 return _context23.stop();
             }

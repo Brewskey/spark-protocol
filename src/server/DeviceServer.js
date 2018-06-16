@@ -1032,13 +1032,6 @@ class DeviceServer {
       return;
     }
 
-    // Check if product is in safe mode. For some reason it returns this weird
-    // firmware code when it's in this state.
-    const deviceAttributes = device.getAttributes();
-    if (deviceAttributes.productFirmwareVersion === 65535) {
-      return;
-    }
-
     const systemInformation = device.getSystemInformation();
     const isMissingDependency = FirmwareManager.isMissingOTAUpdate(
       systemInformation,
