@@ -375,7 +375,7 @@ var downloadAppBinaries = function () {
 }();
 
 (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee6() {
-  var _ref7, releases, assets, downloadedBinaries;
+  var _ref7, releases, _releases, data, assets, downloadedBinaries;
 
   return _regenerator2.default.wrap(function _callee6$(_context6) {
     while (1) {
@@ -409,15 +409,33 @@ var downloadAppBinaries = function () {
           return githubAPI.repos.listReleases({
             owner: GITHUB_USER,
             page: 0,
-            perPage: 30,
+            perPage: 100,
             repo: GITHUB_FIRMWARE_REPOSITORY
           });
 
         case 13:
           releases = _context6.sent;
+          _releases = releases, data = _releases.data;
 
+        case 15:
+          if (!githubAPI.hasNextPage(releases)) {
+            _context6.next = 22;
+            break;
+          }
 
-          releases.data.sort(function (a, b) {
+          _context6.next = 18;
+          return githubAPI.getNextPage(releases);
+
+        case 18:
+          releases = _context6.sent;
+
+          data = data.concat(releases.data);
+          _context6.next = 15;
+          break;
+
+        case 22:
+
+          data.sort(function (a, b) {
             if (a.tag_name < b.tag_name) {
               return 1;
             }
@@ -427,33 +445,33 @@ var downloadAppBinaries = function () {
             return 0;
           });
 
-          assets = (_ref7 = []).concat.apply(_ref7, (0, _toConsumableArray3.default)(releases.data.map(function (release) {
+          assets = (_ref7 = []).concat.apply(_ref7, (0, _toConsumableArray3.default)(data.map(function (release) {
             return release.assets;
           })));
-          _context6.next = 18;
+          _context6.next = 26;
           return downloadFirmwareBinaries(assets);
 
-        case 18:
+        case 26:
           downloadedBinaries = _context6.sent;
-          _context6.next = 21;
+          _context6.next = 29;
           return updateSettings(downloadedBinaries);
 
-        case 21:
+        case 29:
 
           console.log('\r\nCompleted Sync');
-          _context6.next = 27;
+          _context6.next = 35;
           break;
 
-        case 24:
-          _context6.prev = 24;
+        case 32:
+          _context6.prev = 32;
           _context6.t1 = _context6['catch'](0);
 
           console.log(_context6.t1);
 
-        case 27:
+        case 35:
         case 'end':
           return _context6.stop();
       }
     }
-  }, _callee6, undefined, [[0, 24], [3, 8]]);
+  }, _callee6, undefined, [[0, 32], [3, 8]]);
 }))();

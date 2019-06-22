@@ -249,14 +249,19 @@ const downloadAppBinaries = async (): Promise<*> => {
       console.error(error);
     }
     // Download firmware binaries
-    const releases = await githubAPI.repos.listReleases({
+    let releases = await githubAPI.repos.listReleases({
       owner: GITHUB_USER,
       page: 0,
-      perPage: 30,
+      perPage: 100,
       repo: GITHUB_FIRMWARE_REPOSITORY,
     });
+    let { data } = releases;
+    while (githubAPI.hasNextPage(releases)) {
+      releases = await githubAPI.getNextPage(releases);
+      data = data.concat(releases.data);
+    }
 
-    releases.data.sort(
+    data.sort(
       (a: Object, b: Object): number => {
         if (a.tag_name < b.tag_name) {
           return 1;
@@ -269,7 +274,7 @@ const downloadAppBinaries = async (): Promise<*> => {
     );
 
     const assets = [].concat(
-      ...releases.data.map((release: any): Array<any> => release.assets),
+      ...data.map((release: any): Array<any> => release.assets),
     );
 
     const downloadedBinaries = await downloadFirmwareBinaries(assets);
