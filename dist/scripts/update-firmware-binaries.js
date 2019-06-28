@@ -1,10 +1,6 @@
 #! /usr/bin/env node
 'use strict';
 
-var _toConsumableArray2 = require('babel-runtime/helpers/toConsumableArray');
-
-var _toConsumableArray3 = _interopRequireDefault(_toConsumableArray2);
-
 var _stringify = require('babel-runtime/core-js/json/stringify');
 
 var _stringify2 = _interopRequireDefault(_stringify);
@@ -12,6 +8,10 @@ var _stringify2 = _interopRequireDefault(_stringify);
 var _extends2 = require('babel-runtime/helpers/extends');
 
 var _extends3 = _interopRequireDefault(_extends2);
+
+var _toConsumableArray2 = require('babel-runtime/helpers/toConsumableArray');
+
+var _toConsumableArray3 = _interopRequireDefault(_toConsumableArray2);
 
 var _promise = require('babel-runtime/core-js/promise');
 
@@ -260,30 +260,43 @@ var downloadBlob = function () {
 
 var downloadFirmwareBinaries = function () {
   var _ref3 = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee3(assets) {
-    var assetFileNames;
+    var CHUNK_SIZE, chunkArray, chunks, assetFileNames;
     return _regenerator2.default.wrap(function _callee3$(_context3) {
       while (1) {
         switch (_context3.prev = _context3.next) {
           case 0:
-            _context3.next = 2;
-            return _promise2.default.all(assets.map(function (asset) {
-              if (asset.name.match(/(system-part|bootloader)/)) {
-                return downloadAssetFile(asset);
+            chunkArray = function chunkArray(input, chunkSize) {
+              var index = 0;
+              var arrayLength = input.length;
+              var tempArray = [];
+
+              for (index = 0; index < arrayLength; index += chunkSize) {
+                tempArray.push(input.slice(index, index + chunkSize));
               }
-              return _promise2.default.resolve('');
-            }));
 
-          case 2:
+              return tempArray;
+            };
+
+            CHUNK_SIZE = 10;
+            chunks = chunkArray(assets.filter(function (asset) {
+              return asset.name.match(/(system-part|bootloader)/);
+            }), CHUNK_SIZE);
+            _context3.next = 5;
+            return chunks.reduce(function (promise, chunk) {
+              return promise.then(function (results) {
+                return _promise2.default.all([].concat((0, _toConsumableArray3.default)(results || []), (0, _toConsumableArray3.default)(chunk.map(function (asset) {
+                  return downloadAssetFile(asset);
+                }))));
+              });
+            }, _promise2.default.resolve());
+
+          case 5:
             assetFileNames = _context3.sent;
-
-
-            console.log();
-
             return _context3.abrupt('return', assetFileNames.filter(function (item) {
               return !!item;
             }));
 
-          case 5:
+          case 7:
           case 'end':
             return _context3.stop();
         }

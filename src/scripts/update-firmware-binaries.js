@@ -176,18 +176,38 @@ const downloadBlob = async (asset: any): Promise<*> => {
 const downloadFirmwareBinaries = async (
   assets: Array<Asset>,
 ): Promise<Array<string>> => {
-  const assetFileNames = await Promise.all(
-    assets.map(
-      (asset: Object): Promise<string> => {
-        if (asset.name.match(/(system-part|bootloader)/)) {
-          return downloadAssetFile(asset);
-        }
-        return Promise.resolve('');
-      },
-    ),
-  );
+  const CHUNK_SIZE = 10;
 
-  console.log();
+  function chunkArray(input: Array, chunkSize: Number): Array {
+    let index = 0;
+    const arrayLength = input.length;
+    const tempArray = [];
+
+    for (index = 0; index < arrayLength; index += chunkSize) {
+      tempArray.push(input.slice(index, index + chunkSize));
+    }
+
+    return tempArray;
+  }
+
+  const chunks = chunkArray(
+    assets.filter(
+      (asset: Object): Promise<string> =>
+        asset.name.match(/(system-part|bootloader)/),
+    ),
+    CHUNK_SIZE,
+  );
+  const assetFileNames = await chunks.reduce(
+    (promise: Promise, chunk: Array): Array =>
+      promise.then(
+        (results: Array): Promise =>
+          Promise.all([
+            ...(results || []),
+            ...chunk.map((asset: Object): Promise => downloadAssetFile(asset)),
+          ]),
+      ),
+    Promise.resolve(),
+  );
 
   return assetFileNames.filter((item: ?string): boolean => !!item);
 };
